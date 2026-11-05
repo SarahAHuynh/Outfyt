@@ -14,7 +14,8 @@ export const signupSchema = credentialsSchema.extend({
 });
 
 export function authErrorMessage(error: { code?: string; status?: number }) {
-  if (error.status === 429 || error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit") return "Too many attempts. Please wait a few minutes before trying again.";
+  if (error.code === "over_email_send_rate_limit") return "Email delivery limit reached. With the default email sender, the limit is 2 emails per hour across the project. Exact time remaining is unavailable because the email service did not provide a reset time. Please wait before requesting another confirmation link.";
+  if (error.status === 429 || error.code === "over_request_rate_limit") return "Too many attempts. Please wait before trying again.";
   if (error.code === "email_not_confirmed") return "Confirm your email before signing in. Check your inbox and spam folder.";
   if (error.code === "invalid_credentials") return "Email or password is incorrect.";
   if (error.code === "weak_password") return "Choose a stronger password that meets your project's password requirements.";

@@ -45,10 +45,28 @@ The dashboard uses empty foundation data; wardrobe operations, AI chat, style pr
 - Incorrect API key/project URL: ensure both come from the same project and that the key is publishable. The database password is not an API key.
 - Email not authorized: use an organization team email for this test; other users need custom SMTP.
 - Rate limit: wait before requesting another confirmation; repeated resends consume the project's email allowance.
+- No email after resend: first check Authentication > Users. Supabase returns a generic accepted response without sending signup confirmation for an already-confirmed account. Sign in with its password instead. If still unconfirmed, inspect Authentication logs for the resend request, check spam, and check delivery limits. The built-in sender currently allows two emails per hour across the project; repeatedly clicking resend will not bypass this limit.
 - Invalid/expired confirmation link: use the most recently requested email, or sign in if already confirmed. Use the resend form if still unconfirmed.
 - Database error saving new user: report the error text. The profile-creation trigger must have been created by the migration; inspect Supabase Auth logs without sharing tokens or passwords.
 
 ## Automated checks
+
+### Delivery-limit messages
+
+The default Supabase sender currently allows 2 authentication emails per hour across the project, not per user. Custom SMTP has its own configured allowance. A project-level quota error normally does not include a reset time, so the app explicitly says that the exact time remaining is unavailable.
+
+When an authentication response includes `Retry-After` (seconds or an HTTP date), or Supabase's recognized per-address cooldown message specifies seconds, the app shows a live `minutes:seconds` countdown. It uses only provider timing, not the time of the first local error. At zero it invites a manual retry without claiming that an email has been delivered. It never automatically retries email requests. No tokens, passwords, or raw response bodies are stored to calculate the wait.
+
+Manual tests for this change:
+
+| Case | Expected result |
+| --- | --- |
+| Existing email quota error without reset metadata | Explains the default 2-emails-per-hour project allowance and says exact time remaining is unavailable |
+| A provider rate-limit response supplies a wait duration | A countdown appears and decreases each second |
+| The reported wait reaches zero | Timer stops at zero; manual retry is available; no automatic email request occurs |
+| Invalid password error | Ordinary credential error, without a countdown |
+
+Use mocked tests for cooldown parsing rather than repeatedly sending real emails to trigger rate limits. No dashboard setting or new environment variable is required for this change.
 
 Use Node.js 22.14+ for the test runner. Run `npm test`, `npm run typecheck`, and `npm run build`. Tests cover validation and sanitized error messages. They do not send real email or establish a Supabase session; the manual tests above cover those operations.
 

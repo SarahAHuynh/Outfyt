@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { authenticate, resendConfirmation } from "@/app/auth/actions";
+import { AuthError } from "./auth-error";
 
 export function AuthForm({ configured }: { configured: boolean }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -31,7 +32,7 @@ function CredentialsForm({ mode, configured }: { mode: "login" | "signup"; confi
       {mode === "signup" && <><p id="password-help" className="text-xs text-[#756e78]">Use at least 8 characters.</p><label className="block text-sm">Confirm password<input name="confirmPassword" required type="password" maxLength={256} autoComplete="new-password" className={inputStyle} /></label></>}
       <button type="submit" className="w-full rounded-full bg-[#28262b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#71638e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#71638e]">{pending ? "Please wait..." : mode === "signup" ? "Create account" : "Sign in"}</button>
     </fieldset>
-    {state.error && <p role="alert" className="text-sm text-rose-800">{state.error}</p>}
+    {state.error && <AuthError error={state.error} retryAt={state.retryAt} />}
     {state.message && <p role="status" className="text-sm text-[#71638e]">{state.message}</p>}
   </form>;
 }
@@ -39,9 +40,10 @@ function CredentialsForm({ mode, configured }: { mode: "login" | "signup"; confi
 function ResendForm({ configured }: { configured: boolean }) {
   const [state, action, pending] = useActionState(resendConfirmation, {});
   return <form action={action} className="mt-4 space-y-3">
+    <p>Already confirmed your email? Sign in instead. This form only requests a link for an account that still needs confirmation.</p>
     <label className="block">Email address<input name="email" required type="email" autoComplete="email" className={inputStyle} /></label>
     <button disabled={pending || !configured} className="underline disabled:opacity-50">{pending ? "Requesting..." : "Send a new confirmation link"}</button>
-    {state.error && <p role="alert" className="text-rose-800">{state.error}</p>}
+    {state.error && <AuthError error={state.error} retryAt={state.retryAt} />}
     {state.message && <p role="status">{state.message}</p>}
   </form>;
 }

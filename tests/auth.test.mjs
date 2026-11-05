@@ -27,6 +27,13 @@ test("rate limits provide actionable feedback", () => {
   assert.match(authErrorMessage({ status: 429 }), /wait/i);
   assert.match(authErrorMessage({ code: "over_email_send_rate_limit" }), /wait/i);
 });
+test("email delivery limits explain the allowance instead of promising a short retry", () => {
+  const message = authErrorMessage({ code: "over_email_send_rate_limit", status: 429 });
+  assert.match(message, /email delivery limit/i);
+  assert.match(message, /2 emails per hour across the project/i);
+  assert.match(message, /exact time remaining is unavailable/i);
+  assert.doesNotMatch(message, /few minutes/i);
+});
 test("unconfirmed users get confirmation instructions", () => {
   assert.match(authErrorMessage({ code: "email_not_confirmed" }), /confirm your email/i);
 });
