@@ -1,2 +1,16 @@
-import { Shirt, Plus, Search, SlidersHorizontal } from "lucide-react"; import { AppShell } from "@/components/app-shell"; import { Button, EmptyCard } from "@/components/ui";
-export default function Closet() { return <AppShell title="My Closet" eyebrow="your pieces, your starting point"><div className="flex flex-col justify-between gap-4 sm:flex-row"><div className="flex gap-2"><div className="flex items-center gap-2 rounded-full border border-[#ebe7e7] bg-white px-4 py-2.5 text-sm text-[#a39ca4]"><Search className="h-4 w-4" />Search your closet</div><Button variant="ghost" className="hidden sm:inline-flex"><SlidersHorizontal className="mr-2 h-4 w-4" />Filter</Button></div><Button><Plus className="mr-2 h-4 w-4" />Add a piece</Button></div><div className="mt-8"><EmptyCard icon={<Shirt />} title="Your closet is a blank canvas" text="Add a few pieces to start building outfits that feel like you. You can add photos now and refine the details later." action={<Button><Plus className="mr-2 h-4 w-4" />Add your first piece</Button>} /></div></AppShell>; }
+import { AppShell } from "@/components/app-shell";
+import { Closet } from "@/components/wardrobe/closet";
+import { loadWardrobe } from "@/lib/wardrobe/read";
+import { WardrobeError } from "@/lib/wardrobe/service";
+import type { WardrobeItem } from "@/lib/wardrobe/schema";
+
+export default async function ClosetPage() {
+  let items: WardrobeItem[] = [];
+  let warning: string | undefined;
+  let error = "";
+  try { ({ items, warning } = await loadWardrobe()); }
+  catch (cause) { error = cause instanceof WardrobeError ? cause.message : "Could not load your closet. Please try again."; }
+  return <AppShell title="My Closet" eyebrow="your pieces, your starting point">
+    <Closet aiEnabled={Boolean(process.env.OPENAI_API_KEY?.trim())} initialItems={items} initialError={error} initialWarning={warning} />
+  </AppShell>;
+}
