@@ -1,2 +1,14 @@
-"use client"; import { useState } from "react"; import { Send, Sparkles, Paperclip } from "lucide-react"; import { AppShell } from "@/components/app-shell";
-export default function Stylist() { const [value, setValue] = useState(""); return <AppShell title="AI Stylist" eyebrow="a second opinion, whenever you need it"><div className="mx-auto max-w-3xl"><div className="rounded-3xl border border-[#ebe7e7] bg-white p-6 md:p-9"><div className="flex items-center gap-4 border-b border-[#ebe7e7] pb-6"><div className="rounded-2xl bg-[#eee9f4] p-3 text-[#71638e]"><Sparkles /></div><div><h2 className="serif text-2xl">Your personal stylist</h2><p className="text-sm text-[#756e78]">Ask me anything about getting dressed.</p></div></div><div className="flex min-h-[360px] flex-col items-center justify-center text-center"><div className="rounded-full bg-[#f6edf0] p-4 text-[#a27785]"><Sparkles /></div><h3 className="serif mt-5 text-3xl">What are we wearing?</h3><p className="mt-2 max-w-sm text-sm leading-6 text-[#756e78]">Try “make me something cute for brunch” or “style my black cardigan.”</p><div className="mt-6 flex flex-wrap justify-center gap-2">{["Something for brunch", "Casual but polished", "Style an item"].map(s => <button key={s} onClick={() => setValue(s)} className="rounded-full border border-[#ebe7e7] px-3 py-2 text-xs text-[#756e78] hover:border-[#a69ac5]">{s}</button>)}</div></div><form onSubmit={e => e.preventDefault()} className="flex items-center gap-2 rounded-2xl bg-[#f9f7f4] p-2"><button type="button" aria-label="Attach inspiration" className="rounded-xl p-3 text-[#a69ac5]"><Paperclip className="h-5 w-5" /></button><input value={value} onChange={e => setValue(e.target.value)} placeholder="Tell me what you’re in the mood for…" className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none" /><button type="submit" aria-label="Send message" className="rounded-xl bg-[#28262b] p-3 text-white hover:bg-[#71638e]"><Send className="h-5 w-5" /></button></form></div></div></AppShell>; }
+import { AppShell } from "@/components/app-shell";
+import { StylistChat } from "@/components/stylist/chat";
+import { loadStylistView } from "@/lib/stylist/server";
+import { wardrobeContext } from "@/lib/wardrobe/server";
+import { WardrobeError } from "@/lib/wardrobe/service";
+import type { StylistView } from "@/lib/stylist/schema";
+
+export default async function StylistPage() {
+  let view:StylistView | null = null;
+  let error = "";
+  try { view = await loadStylistView(await wardrobeContext()); }
+  catch(cause) { error = cause instanceof WardrobeError ? cause.message : "Could not load the stylist. Check the Milestone 3 database setup."; }
+  return <AppShell title="AI Stylist" eyebrow="a second opinion, whenever you need it"><StylistChat initialView={view} initialError={error} /></AppShell>;
+}
