@@ -8,6 +8,8 @@ The chat streams actual execution stages over NDJSON. Candidate cards show real 
 
 ## One-time database setup
 
+The current version also requires follow-up migration `0004_chat_sessions.sql` after 0003. It preserves existing messages under Previous conversation and enables separate chats. Run `supabase/checks/chats.sql` afterward; see `docs/CHAT_UPDATES.md` for the saved-button and lookbook regression checks.
+
 1. Open https://supabase.com/dashboard and choose `outfyt`.
 2. Select SQL Editor and create a new query.
 3. Paste all of `supabase/migrations/0003_stylist_agent.sql` and select Run once. Keep migrations 0001 and 0002; do not rerun them.

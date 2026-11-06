@@ -1,15 +1,17 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Send, Sparkles, LoaderCircle, RefreshCw, Bookmark, History } from "lucide-react";
+import { Send, Sparkles, LoaderCircle, RefreshCw, Bookmark, History,Check,Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { readApiResponse } from "@/components/wardrobe/item-editor";
 import type { StylistEvent, StylistView } from "@/lib/stylist/schema";
 import { OutfitCard } from "./outfit-card";
 import { PendingActionCard } from "./pending-action";
+import { ReferencePhotos } from "./reference-photos";
 
 const stageNames:Record<string,string> = {
+  search_reference_photos:"Finding clothing photo examples...",
   get_wardrobe:"Looking through your closet...",get_wardrobe_item:"Checking that piece...",get_style_profile:"Reading your Style DNA...",
   generate_outfits:"Creating outfit combinations...",save_outfit:"Saving your look...",get_saved_outfits:"Opening your lookbook...",
   update_outfit:"Updating your saved look...",add_clothing_item:"Adding your clothing item...",update_clothing_item:"Updating your clothing item...",
@@ -30,9 +32,23 @@ export function StylistChat({ initialView,initialError }: { initialView:StylistV
   const router = useRouter();
   useEffect(() => { end.current?.scrollIntoView({ behavior:"smooth",block:"nearest" }); },[view?.messages.length,pendingUser,stage]);
 
-  async function reload(clearError = true) {
-    try { setView(await readApiResponse(await fetch("/api/stylist",{ cache:"no-store" }))); if (clearError) setError(""); }
+  async function reload(clearError = true,chatId = view?.active_chat_id) {
+    try { setView(await readApiResponse(await fetch(`/api/stylist${chatId ? `?chat=${encodeURIComponent(chatId)}` : ""}`,{ cache:"no-store" }))); if (clearError) setError(""); }
     catch(cause) { setError(cause instanceof Error ? cause.message : "Could not reload the conversation."); }
+  }
+  async function newChatId() {
+    const data = await readApiResponse(await fetch("/api/stylist/chats",{ method:"POST" }));
+    return data.chat.id as string;
+  }
+  async function openChat(id?:string) {
+    if (busy) return;
+    setBusy(true); setError(""); setNotice(""); setStage(id ? "Opening your previous chat..." : "Starting a new chat...");
+    try {
+      const selected = id || await newChatId();
+      await reload(true,selected); setDraft(""); setPendingUser("");
+      router.push(`/stylist?chat=${encodeURIComponent(selected)}`,{ scroll:false });
+    } catch(cause) { setError(cause instanceof Error ? cause.message : "Could not open this chat."); }
+    finally { setBusy(false); setStage(""); }
   }
   function receive(event:StylistEvent) {
     if (event.type === "stage") setStage(stageNames[event.text] || event.text);
@@ -42,7 +58,8 @@ export function StylistChat({ initialView,initialError }: { initialView:StylistV
     event.preventDefault(); const message = draft.trim(); if (!message || busy) return;
     setBusy(true); setPendingUser(message); setError(""); setNotice(""); setStage("Starting your stylist request...");
     try {
-      const response = await fetch("/api/stylist",{ method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify({ request_id:crypto.randomUUID(),message }) });
+      const activeId = view?.active_chat_id || await newChatId();
+      const response = await fetch("/api/stylist",{ method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify({ request_id:crypto.randomUUID(),message,chat_id:activeId }) });
       if (!response.ok) { await readApiResponse(response); return; }
       setDraft("");
       if (response.headers.get("content-type")?.includes("application/x-ndjson")) {
@@ -55,23 +72,41 @@ export function StylistChat({ initialView,initialError }: { initialView:StylistV
         }
         buffer += decoder.decode(); if (buffer.trim()) receive(JSON.parse(buffer));
       } else await readApiResponse(response);
-      await reload(false); router.refresh();
+      await reload(false,activeId);
+      if (!view?.active_chat_id) router.replace(`/stylist?chat=${encodeURIComponent(activeId)}`,{ scroll:false });
+      else router.refresh();
     } catch(cause) { setError(cause instanceof Error ? cause.message : "The request was interrupted. Refresh action history before trying again."); }
     finally { setBusy(false); setStage(""); setPendingUser(""); }
   }
   async function saveCandidate(id:string) {
     setSaving(id); setError("");
-    try { await readApiResponse(await fetch("/api/outfits",{ method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify({ candidate_id:id }) })); setNotice("Outfit saved to your lookbook."); await reload(); router.refresh(); }
+    try {
+      await readApiResponse(await fetch("/api/outfits",{ method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify({ candidate_id:id }) }));
+      setView(previous => previous ? { ...previous,saved_outfit_ids:[...new Set([...previous.saved_outfit_ids,id])] } : previous);
+      setNotice("Outfit saved to your lookbook."); await reload(); router.refresh();
+    }
     catch(cause) { setError(cause instanceof Error ? cause.message : "Could not save that outfit."); }
     finally { setSaving(null); }
   }
 
   return <div className="mx-auto max-w-4xl space-y-5">
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <label className="min-w-0 flex-1 text-xs font-semibold text-[#71638e]">Previous chats
+        <select aria-label="Previous chats" disabled={busy} value={view?.active_chat_id || ""} onChange={event => { if (event.target.value) void openChat(event.target.value); }} className="mt-1.5 block w-full max-w-md rounded-xl border border-[#e0d7e9] bg-white px-3 py-2.5 text-sm font-normal text-[#28262b]">
+          <option value="" disabled>Choose a conversation</option>{view?.chats.map(chat => <option key={chat.id} value={chat.id}>{chat.title}</option>)}
+        </select>
+      </label>
+      <Button variant="accent" disabled={busy || Boolean(saving)} onClick={() => void openChat()}><Plus className="mr-2 h-4 w-4" />New chat</Button>
+    </div>
     <section className="overflow-hidden rounded-3xl border border-[#e4dce9] bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ebe7e7] p-5"><div className="flex items-center gap-3"><div className="rounded-2xl bg-[#eee9f4] p-3 text-[#594273]"><Sparkles /></div><div><h2 className="serif text-2xl">Your personal stylist</h2><p className="text-xs text-[#756e78]">Real pieces. Thoughtful combinations.</p></div></div><Button variant="ghost" disabled={busy} onClick={() => void reload()} aria-label="Refresh conversation"><RefreshCw className="h-4 w-4" /></Button></div>
       <div className="max-h-[65dvh] min-h-[320px] space-y-5 overflow-y-auto p-5 sm:p-7" aria-label="Stylist conversation">
         {!view?.messages.length && !busy && <div className="py-10 text-center"><Sparkles className="mx-auto h-9 w-9 text-[#a69ac5]" /><h3 className="serif mt-4 text-3xl">What are we wearing?</h3><p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#756e78]">Ask for a look, save a favorite, or update an outfit. Complete looks need a dress or top and bottom, plus shoes.</p><div className="mt-5 flex flex-wrap justify-center gap-2">{["Make me a cute outfit for brunch.","Give me three casual looks.","Show my saved outfits."].map(text => <button key={text} onClick={() => setDraft(text)} className="rounded-full border border-[#e0d7e9] px-3 py-2 text-xs text-[#594273] hover:bg-[#eee9f4]">{text}</button>)}</div></div>}
-        {view?.messages.map(message => <div key={message.id} className={message.role === "user" ? "ml-auto max-w-[85%]" : "max-w-full"}><p className={`whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "user" ? "bg-[#594273] text-white" : "bg-[#f6f3f8] text-[#3e3548]"}`}>{message.content}</p>{message.role === "assistant" && message.candidates.length > 0 && <div className="mt-4 grid gap-4 lg:grid-cols-2">{message.candidates.map(candidate => <OutfitCard key={candidate.id} name={candidate.name} description={candidate.description} explanation={candidate.explanation} ordinal={candidate.ordinal} itemIds={candidate.item_ids} wardrobe={view.wardrobe} footer={<Button variant="accent" disabled={Boolean(saving) || busy} onClick={() => void saveCandidate(candidate.id)}><Bookmark className="mr-2 h-4 w-4" />{saving === candidate.id ? "Saving..." : "Save look"}</Button>} />)}</div>}</div>)}
+        {view?.messages.map(message => <div key={message.id} className={message.role === "user" ? "ml-auto max-w-[85%]" : "max-w-full"}>
+          <p className={`whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-7 ${message.role === "user" ? "bg-[#594273] text-white" : "bg-[#f6f3f8] text-[#3e3548]"}`}>{message.content}</p>
+          {message.role === "assistant" && message.reference_photos && <ReferencePhotos batch={message.reference_photos} />}
+          {message.role === "assistant" && message.candidates.length > 0 && <div className="mt-4 grid gap-4 lg:grid-cols-2">{message.candidates.map(candidate => <OutfitCard key={candidate.id} name={candidate.name} description={candidate.description} explanation={candidate.explanation} ordinal={candidate.ordinal} itemIds={candidate.item_ids} wardrobe={view.wardrobe} footer={<Button variant={view.saved_outfit_ids.includes(candidate.id) ? "soft" : "accent"} disabled={Boolean(saving) || busy || view.saved_outfit_ids.includes(candidate.id)} onClick={() => void saveCandidate(candidate.id)}>{view.saved_outfit_ids.includes(candidate.id) ? <Check className="mr-2 h-4 w-4" /> : <Bookmark className="mr-2 h-4 w-4" />}{view.saved_outfit_ids.includes(candidate.id) ? "Saved" : saving === candidate.id ? "Saving..." : "Save look"}</Button>} />)}</div>}
+        </div>)}
         {pendingUser && <p className="ml-auto max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-[#594273] px-4 py-3 text-sm leading-7 text-white">{pendingUser}</p>}
         {busy && <p role="status" className="flex items-center gap-2 text-sm text-[#594273]"><LoaderCircle className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />{stage}</p>}
         <div ref={end} />

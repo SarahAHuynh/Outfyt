@@ -9,6 +9,8 @@ import { toolSchemas, sanitizeToolArguments, type ToolName } from "./tools";
 import { outfitDetailsSchema, styleProposalSchema, validateOutfitItems, type OutfitCandidate, type SavedOutfit, type StylistView, type ActionLog, type PendingAction, type StylistMessage } from "./schema";
 import { generateOwnedOutfits, analyzeOwnedInspiration } from "./generation";
 import type { ToolResult } from "./loop";
+import { readSavedOutfits } from "./outfits";
+import { photoBatchSchema, searchReferencePhotos } from "./photos";
 
 export function stylistError(error: unknown) {
   if (error instanceof WardrobeError) return error;
@@ -21,7 +23,7 @@ export function stylistError(error: unknown) {
 
 export function checkRpc(error: { code?: string; message: string } | null) {
   if (!error) return;
-  if (["PGRST202","PGRST205","42P01","42501"].includes(error.code || "")) throw new WardrobeError("Stylist setup is missing. Run the Milestone 3 database migration first.", 503);
+  if (["PGRST202","PGRST205","42P01","42501"].includes(error.code || "")) throw new WardrobeError("Database setup is incomplete. Run the supplied migrations through 0004_chat_sessions.sql.", 503);
   if (error.message.includes("Hourly")) throw new WardrobeError("You have reached 10 stylist requests this hour. Try again next hour.", 429);
   if (error.message.includes("already running")) throw new WardrobeError("A stylist request is already running. Wait for it to finish, then refresh.", 409);
   if (error.message.includes("changed") || error.message.includes("expired")) throw new WardrobeError("This item changed or its approval expired. Refresh and request the action again.", 409);
@@ -29,12 +31,10 @@ export function checkRpc(error: { code?: string; message: string } | null) {
   throw new WardrobeError("The requested record is unavailable or the database operation failed. Refresh and try again.", 409);
 }
 
-export type StylistContext = Awaited<ReturnType<typeof wardrobeContext>>;
+export type StylistContext = Awaited<ReturnType<typeof wardrobeContext>> & { chatId?:string };
 
 export async function savedOutfits(context: StylistContext): Promise<SavedOutfit[]> {
-  const { data, error } = await context.supabase.from("outfits").select("*, outfit_items(wardrobe_item_id,position)").eq("user_id",context.user.id).order("created_at",{ ascending: false }).limit(100);
-  checkRpc(error);
-  return (data || []).map(outfit => ({ id: outfit.id, name: outfit.name, occasion: outfit.occasion || "", aesthetic: outfit.aesthetic || "", description: outfit.description || "", is_favorite: outfit.is_favorite, updated_at: outfit.updated_at, item_ids: (outfit.outfit_items as { wardrobe_item_id: string; position: number }[]).sort((a,b) => a.position-b.position).map(item => item.wardrobe_item_id) }));
+  return readSavedOutfits(context.supabase,context.user.id);
 }
 
 export async function getStyle(context: StylistContext) {
@@ -42,22 +42,39 @@ export async function getStyle(context: StylistContext) {
   checkRpc(error); return data;
 }
 
-export async function loadStylistView(context: StylistContext): Promise<StylistView> {
+export async function loadStylistView(context: StylistContext,chatId?:string): Promise<StylistView> {
   const { supabase, user } = context;
-  const [messages, candidates, pending, logs, wardrobe] = await Promise.all([
-    supabase.from("stylist_messages").select("id,role,content,turn_id,created_at").eq("user_id",user.id).order("created_at",{ ascending:false }).limit(30),
-    supabase.from("outfit_candidates").select("id,turn_id,ordinal,payload,created_at").eq("user_id",user.id).order("created_at",{ ascending:false }).limit(90),
-    supabase.from("agent_pending_actions").select("token,action_name,payload,status,expires_at,result").eq("user_id",user.id).order("created_at",{ ascending:false }).limit(20),
-    supabase.from("agent_action_logs").select("id,action_name,sanitized_arguments,status,confirmation_status,error_message,created_at").eq("user_id",user.id).order("created_at",{ ascending:false }).limit(40),
-    loadWardrobe(),
+  const chats = await supabase.from("stylist_chats").select("id,title,updated_at").eq("user_id",user.id).order("updated_at",{ ascending:false }).limit(100);
+  checkRpc(chats.error);
+  const active = chatId ? chats.data?.find(chat => chat.id === chatId)?.id : chats.data?.[0]?.id;
+  if (chatId && !active) throw new WardrobeError("This chat is unavailable. Choose one of your own previous chats.",404);
+  const emptyView = { messages:[],candidates:[],pending:[],logs:[],wardrobe:[],saved_outfit_ids:[],chats:chats.data || [],active_chat_id:null };
+  if (!active) return emptyView;
+  const turns = await supabase.from("stylist_turns").select("id").eq("user_id",user.id).eq("chat_id",active).order("created_at",{ ascending:false }).limit(50);
+  checkRpc(turns.error);
+  const ids = turns.data?.map(turn => turn.id) || [];
+  const [messages, candidates, pending, logs, wardrobe,saved,photos] = await Promise.all([
+    ids.length ? supabase.from("stylist_messages").select("id,role,content,turn_id,created_at").eq("user_id",user.id).in("turn_id",ids).order("created_at",{ ascending:false }).limit(100) : { data:[],error:null },
+    ids.length ? supabase.from("outfit_candidates").select("id,turn_id,ordinal,payload,created_at").eq("user_id",user.id).in("turn_id",ids).order("created_at",{ ascending:false }).limit(150) : { data:[],error:null },
+    supabase.from("agent_pending_actions").select("token,action_name,payload,status,expires_at,result").eq("user_id",user.id).eq("chat_id",active).order("created_at",{ ascending:false }).limit(20),
+    supabase.from("agent_action_logs").select("id,action_name,sanitized_arguments,status,confirmation_status,error_message,created_at").eq("user_id",user.id).eq("chat_id",active).order("created_at",{ ascending:false }).limit(40),
+    loadWardrobe(),supabase.from("outfits").select("id").eq("user_id",user.id),
+    ids.length ? supabase.from("stylist_photo_searches").select("turn_id,payload").eq("user_id",user.id).in("turn_id",ids) : { data:[],error:null },
   ]);
+  checkRpc(saved.error);
   [messages.error,candidates.error,pending.error,logs.error].forEach(checkRpc);
+  // Older chats remain usable before the optional photo migration is applied.
+  if (photos.error && !["42P01","PGRST205"].includes(photos.error.code || "")) checkRpc(photos.error);
+  const photoBatches = new Map((photos.data || []).flatMap(row => {
+    const parsed = photoBatchSchema.safeParse(row.payload);
+    return parsed.success ? [[row.turn_id,parsed.data] as const] : [];
+  }));
   const rows = (candidates.data || []).map(row => ({ ...outfitDetailsSchema.parse(row.payload), id: row.id, turn_id: row.turn_id, ordinal: row.ordinal })) as OutfitCandidate[];
   return {
-    messages: (messages.data || []).reverse().map(row => ({ id: row.id, role: row.role as StylistMessage["role"], content: row.content, turn_id: row.turn_id, candidates: rows.filter(candidate => candidate.turn_id === row.turn_id).sort((a,b) => a.ordinal-b.ordinal) })),
+    messages: (messages.data || []).reverse().map(row => ({ id: row.id, role: row.role as StylistMessage["role"], content: row.content, turn_id: row.turn_id, candidates: rows.filter(candidate => candidate.turn_id === row.turn_id).sort((a,b) => a.ordinal-b.ordinal),reference_photos:photoBatches.get(row.turn_id) })),
     candidates: rows,
     pending: (pending.data || []).map(row => ({ ...row, payload: { id: row.payload.id, name: row.payload.name, proposal: row.payload.proposal } })) as PendingAction[],
-    logs: (logs.data || []) as ActionLog[], wardrobe: wardrobe.items,
+    logs: (logs.data || []) as ActionLog[], wardrobe: wardrobe.items,saved_outfit_ids:saved.data?.map(outfit => outfit.id) || [],chats:chats.data || [],active_chat_id:active,
   };
 }
 
@@ -69,7 +86,7 @@ export async function writeOutfit(context: StylistContext, id: string, details: 
 }
 
 export async function recordAction(context: StylistContext, id: string, name: string, args: Record<string,unknown>, status: string, error?: string) {
-  const { error: logError } = await context.supabase.rpc("record_agent_action",{ p_id:id,p_action:name,p_args:args,p_status:status,p_confirmation:status === "awaiting_confirmation" ? status : "not_required",p_error:error || null });
+  const { error: logError } = await context.supabase.rpc("record_agent_action",{ p_id:id,p_action:name,p_args:args,p_status:status,p_confirmation:status === "awaiting_confirmation" ? status : "not_required",p_error:error || null,...(context.chatId ? { p_chat:context.chatId } : {}) });
   checkRpc(logError);
 }
 
@@ -87,7 +104,7 @@ function stableId(turn: string, value: unknown) {
 }
 
 export function createToolExecutor(context: StylistContext, turnId: string, client: OpenAI, model: string) {
-  let generated = false, analyzed = false, clothingWrite = false, outfitWrite = false;
+  let generated = false, analyzed = false, clothingWrite = false, outfitWrite = false, photoSearch = false;
   const completed = (data: unknown): ToolResult => ({ status:"completed", data });
   const claimWriteAllowance = (kind: "clothing" | "outfit") => {
     if ((kind === "clothing" ? clothingWrite : outfitWrite)) throw new Error("Bulk changes are not enabled. Review one item or outfit at a time.");
@@ -100,6 +117,21 @@ export function createToolExecutor(context: StylistContext, turnId: string, clie
   return async function execute(name: ToolName, args: Record<string,unknown>, logId: string): Promise<ToolResult> {
     const { supabase,user } = context;
     switch(name) {
+      case "search_reference_photos": {
+        if (photoSearch) throw new Error("Only one photo search is allowed per request. Use the current examples or ask in a new message.");
+        photoSearch = true;
+        const { query } = toolSchemas.search_reference_photos.parse(args);
+        if (!process.env.UNSPLASH_ACCESS_KEY?.trim()) throw new Error("Reference photos are not configured. Add UNSPLASH_ACCESS_KEY on the server and restart it.");
+        const reservation = await supabase.rpc("reserve_photo_search",{ p_turn:turnId });
+        if (reservation.error) {
+          if (reservation.error.message.includes("allowance")) throw new Error("The shared photo-search allowance is used up. Try again later; written recommendations still work.");
+          throw new Error("Reference-photo setup is incomplete or this search was already attempted. Apply 0005_reference_photos.sql if needed. Written recommendations still work.");
+        }
+        const batch = await searchReferencePhotos(query,process.env.UNSPLASH_ACCESS_KEY);
+        const stored = await supabase.rpc("store_reference_photos",{ p_turn:turnId,p_payload:batch });
+        if (stored.error) throw new Error("Photo examples were found but could not be saved to this chat. No reference cards were added.");
+        return completed({ query:batch.query,photo_count:batch.photos.length,cards_displayed:batch.photos.length>0,limitations:"Stock style references only; exact garment, color and product matches are not verified. Not owned clothing or shopping listings." });
+      }
       case "get_wardrobe": {
         const filters = toolSchemas.get_wardrobe.parse(args);
         const rows = (await wardrobe()).filter(item => (!filters.category || item.category === filters.category) && (!filters.color || item.primary_color?.toLowerCase() === filters.color.toLowerCase()) && (!filters.search || `${item.name} ${item.description}`.toLowerCase().includes(filters.search.toLowerCase())));

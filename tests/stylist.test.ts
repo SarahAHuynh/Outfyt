@@ -41,7 +41,7 @@ function dependencies(overrides:Partial<AgentDependencies> = {}) {
 }
 
 test("all registry tools use strict function schemas and nullable optional fields", () => {
-  assert.equal(stylistTools.length,13);
+  assert.equal(stylistTools.length,14);
   for (const tool of stylistTools) {
     assert.equal(tool.strict,true);
     assert.equal(tool.parameters?.additionalProperties,false);
@@ -143,6 +143,29 @@ test("structured outfit generation validates model IDs before any persistence", 
 test("limited wardrobes yield limitations without fabricated outfits", async () => {
   const result = await generateOwnedOutfits(mockedClient([[message(JSON.stringify({ outfits:[],limitations:["Add shoes and a bottom."] }))]]),"gpt-5.4-mini",wardrobe.slice(0,1),null,{ occasion:"Dinner",aesthetic:"",restrictions:[],required_item_ids:[],excluded_item_ids:[],count:3 });
   assert.equal(result.outfits.length,0); assert.ok(result.limitations.length);
+});
+
+test("stylist photo search returns card availability to the model without inventing owned outfits",async () => {
+  const { deps,executed,logs } = dependencies({ execute:async (name,args) => {
+    assert.equal(name,"search_reference_photos");
+    assert.equal(args.query,"blue relaxed jeans tomboy style");
+    return { status:"completed",data:{ photo_count:3,cards_displayed:true } };
+  } });
+  const client = mockedClient([[call("search_reference_photos",{ query:"blue relaxed jeans tomboy style" })],[message("Try relaxed denim. Photo references appear below.")]],(body,index) => {
+    if (index === 1) assert.match(JSON.stringify(body.input),/cards_displayed/);
+  });
+  assert.match(await runAgentLoop(client,"gpt-5.4-mini",[{ role:"user",content:"Recommend bottoms with image examples" }],deps),/Photo references/);
+  assert.equal(executed.length,0);
+  assert.deepEqual(logs.map(log => [log.name,log.status]),[["search_reference_photos","pending"],["search_reference_photos","completed"]]);
+});
+
+test("photo-search quota failure permits a written stylist response",async () => {
+  const { deps,logs } = dependencies({ execute:async () => { throw new Error("The shared photo-search allowance is used up. Written recommendations still work."); } });
+  const client = mockedClient([[call("search_reference_photos",{ query:"olive cargo pants" })],[message("Photos are unavailable right now. Consider relaxed olive cargo pants.")]],(body,index) => {
+    if (index === 1) assert.match(JSON.stringify(body.input),/allowance is used up/);
+  });
+  assert.match(await runAgentLoop(client,"gpt-5.4-mini",[],deps),/Photos are unavailable/);
+  assert.equal(logs.at(-1)?.status,"failed");
 });
 test("provider authentication errors cannot leak keys into tool outputs or action logs", () => {
   const error = new OpenAI.AuthenticationError(401,{ message:"Incorrect API key sk-test-sensitive" },"Incorrect API key sk-test-sensitive",new Headers());

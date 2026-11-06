@@ -4,7 +4,7 @@ import { z } from "zod";
 import { readSmallJson } from "@/lib/wardrobe/body";
 import { checkMutationOrigin, wardrobeContext, wardrobeFailure } from "@/lib/wardrobe/server";
 import { loadWardrobe } from "@/lib/wardrobe/read";
-import { checkRpc, recordAction, savedOutfits, writeOutfit } from "@/lib/stylist/server";
+import { checkRpc, recordAction, savedOutfits, writeOutfit,type StylistContext } from "@/lib/stylist/server";
 import { outfitDetailsSchema } from "@/lib/stylist/schema";
 import { WardrobeError } from "@/lib/wardrobe/service";
 
@@ -18,10 +18,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    checkMutationOrigin(request); const context = await wardrobeContext();
+    checkMutationOrigin(request); const context:StylistContext = await wardrobeContext();
     const { candidate_id } = z.object({ candidate_id:z.string().uuid() }).parse(await readSmallJson(request));
-    const { data,error } = await context.supabase.from("outfit_candidates").select("payload").eq("id",candidate_id).eq("user_id",context.user.id).maybeSingle(); checkRpc(error);
+    const { data,error } = await context.supabase.from("outfit_candidates").select("payload,turn_id").eq("id",candidate_id).eq("user_id",context.user.id).maybeSingle(); checkRpc(error);
     if (!data) throw new WardrobeError("This outfit candidate is unavailable. Generate a new look.",404);
+    const turn = await context.supabase.from("stylist_turns").select("chat_id").eq("id",data.turn_id).eq("user_id",context.user.id).maybeSingle(); checkRpc(turn.error);
+    if (turn.data?.chat_id) context.chatId = turn.data.chat_id;
     const details = outfitDetailsSchema.parse(data.payload); const logId = randomUUID();
     await recordAction(context,logId,"save_outfit",{ candidate_id },"pending");
     try {

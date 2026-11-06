@@ -5,6 +5,7 @@ import { clothingSchema, CATEGORIES } from "@/lib/wardrobe/schema";
 import { styleProposalSchema } from "./schema";
 
 export const toolSchemas = {
+  search_reference_photos: z.object({ query:z.string().trim().min(1).max(120) }),
   get_wardrobe: z.object({ category: z.enum(CATEGORIES).nullable(), color: z.string().max(40).nullable(), search: z.string().max(100).nullable() }),
   get_wardrobe_item: z.object({ id: z.string().uuid() }),
   add_clothing_item: z.object({ attributes: clothingSchema }),
@@ -21,6 +22,7 @@ export const toolSchemas = {
 };
 export type ToolName = keyof typeof toolSchemas;
 const descriptions: Record<ToolName, string> = {
+  search_reference_photos: "Find up to three real Unsplash clothing reference photos for missing-piece recommendations or requested image examples. One search per turn. Use a short clothing/style query without personal data. References are not owned clothes, verified products, or exact matches. Cards display automatically; no Markdown images needed.",
   get_wardrobe: "Retrieve owned clothing with optional category, color and search filters. Null means no filter.",
   get_wardrobe_item: "Retrieve one exact owned clothing item by ID.",
   add_clothing_item: "Add one explicitly requested manual clothing entry without a photo. Never add clothes the user does not own.",

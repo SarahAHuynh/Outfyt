@@ -17,6 +17,8 @@ The SQL in `supabase/migrations/0001_initial_schema.sql` is designed to run in S
 
 ## Milestone status
 
+Latest chat follow-up: the lookbook relationship query is fixed, saved suggestions show a persistent Saved state, and New chat / Previous chats preserve separate conversations. Apply migration `0004_chat_sessions.sql` after 0003 and follow [chat update checks](docs/CHAT_UPDATES.md). Free Unsplash clothing reference cards are connected through a server-only search tool: follow [PHOTO_SETUP.md](docs/PHOTO_SETUP.md), apply `0005_reference_photos.sql`, and run `supabase/checks/photos.sql`. Reference photos stay in their chat and are separate from owned clothing and saved outfits.
+
 Architecture: protected Next.js pages and authenticated `/api/wardrobe`, `/api/stylist`, and `/api/outfits` route handlers use the user's Supabase session. Photos use private signed URLs. AI calls stay on the server. Shared Zod schemas validate clothing, tool inputs and outfit outputs. Checked SQL RPCs handle budgets, atomic outfit/relationship writes, immutable approvals and action logs. The model receives actual tool results before it continues reasoning.
 
 Prompt engineering: dedicated prompts in `lib/prompts/` cover clothing analysis, AI Stylist, outfit generation and Style DNA analysis. They use roles, few-shot workflows, strict output contracts, retrieved-fact grounding, explicit tool-selection/approval rules, uncertainty handling and untrusted-data boundaries. Programmatic schema, ownership, ID and approval checks enforce safety independently of prompts.
