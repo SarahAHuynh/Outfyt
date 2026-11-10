@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode:true,
   poweredByHeader:false,
+  images:{ remotePatterns:[{ protocol:"https",hostname:"images.unsplash.com" }] },
   turbopack:{ resolveAlias:{ "iceberg-js":"./node_modules/iceberg-js" } },
   async headers() {
     return [
