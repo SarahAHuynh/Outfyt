@@ -44,20 +44,22 @@ These are ongoing instructions, not an installed background updater. `AGENTS.md`
 
 ## Current checkpoint: resume here
 
-**Do not rebuild the app or restart Milestone 1.** Milestones 1 and 2 passed user acceptance. Milestone 3 and follow-up fixes are implemented; the latest photo-reference rollout is awaiting the user's hosted SQL setup and manual acceptance results. Milestone 4 has not started.
+**Do not rebuild the app or restart Milestone 1.** Milestones 1 and 2 passed user acceptance. Milestone 3 and follow-up fixes are implemented; on November 10 the user reported that the latest test cases work. The photo-reference follow-up has passed user acceptance. Milestone 4 has not started.
 
 Most recent implementation: Unsplash reference photos in AI Stylist. The user said **"Unsplash key ready"**. One real search succeeded with HTTP 200 and one photo result; that check used one request, and the remaining allowance reported then was 49. This is historical, not the current quota.
 
-Last instructions given to the user:
+Latest completed acceptance checklist given to the user:
 
 1. In Supabase SQL Editor, run `supabase/migrations/0005_reference_photos.sql` once, after 0004.
 2. Run `supabase/checks/photos.sql`; expect PASS.
 3. Restart `npm run dev`.
 4. Ask for bottoms with image examples, verify photo/credit links, refresh and return to an older chat, verify references were not added to the closet/lookbook, and regression-test actual outfit saves.
 
-**Not yet confirmed:** whether the user applied 0004/0005 in hosted Supabase and passed the latest chat/photo acceptance tests. Do not mark these complete based on local tests. The user has not reported new errors since that handoff.
+**Latest user report:** "also the test cases work" on November 10, following the Unsplash/photo-card checklist. Record that checklist as user-passed; this is user verification, not a fresh independent inspection of the hosted database or every earlier Milestone 3 acceptance scenario. No new application checks were run for this acknowledgment.
 
-Next feature milestone, only after the current phase passes and the user approves: **Milestone 4, Style DNA**.
+**Current discussion:** the user asks whether Pinterest API could replace Unsplash and whether that is recommended. No provider switch has been implemented or approved as a final decision. Research on November 10 found ordinary search is scoped to the authorized user's Pins; broader partner search is beta and not available to all apps. Pinterest setup requires a business account, app review, and OAuth. Recommendation: keep the working Unsplash search for now and consider authorized board-based Pinterest inspiration with Style DNA. Explain the distinction before committing to a replacement.
+
+Next feature milestone, after the user approves: **Milestone 4, Style DNA**. Do not start it solely because tests passed while the provider question is still being discussed.
 
 ## Milestone roadmap and status
 
@@ -65,8 +67,8 @@ Next feature milestone, only after the current phase passes and the user approve
 | --- | --- | --- |
 | 1: Foundation | Next.js, navigation/pages, Supabase schema, private storage policies, authentication, initial service setup | User acceptance passed |
 | 2: Digital Wardrobe | Secure image upload/preview, real AI clothing recognition, editable results, wardrobe CRUD/filtering | User explicitly said "milestone 2 passes" |
-| 3: AI Stylist Agent | Real tool calling, validated owned outfits, lookbook, modifications, approvals, logs | Implemented and locally verified; user has exercised conversations and saved looks; full latest acceptance not confirmed |
-| 3 follow-ups | Persistent Saved buttons, separate chats, lookbook query fix, real Unsplash recommendation photos | Implemented; latest hosted migration/manual review pending |
+| 3: AI Stylist Agent | Real tool calling, validated owned outfits, lookbook, modifications, approvals, logs | Implemented and locally verified; latest follow-up tests user-passed; do not infer every original acceptance scenario was rerun |
+| 3 follow-ups | Persistent Saved buttons, separate chats, lookbook query fix, real Unsplash recommendation photos | Latest manual test cases user-passed on November 10 |
 | 4: Style DNA | Preferences UI, inspiration uploads, AI analysis, persistent profile, style-aware generation, optional Pinterest URL UI | Not started as a full feature; foundational schema/tools already exist |
 | 5: Finalization and Deployment | Integration/security checks, responsive polish, production setup, Vercel, documentation, demo data; authorized Pinterest refresh if available | Pending |
 
@@ -212,7 +214,9 @@ Optional signed-out smoke check with an already running server:
 node tests/stylist-smoke.mjs http://localhost:3000
 ```
 
-### Current pending user test cases
+### Latest user-passed test cases
+
+The user reported these test cases work on November 10. They remain useful regression checks; do not ask the user to repeat setup without evidence of a new problem.
 
 | Action | Expected result |
 | --- | --- |
@@ -225,6 +229,15 @@ node tests/stylist-smoke.mjs http://localhost:3000
 | Request a closet-only outfit | Existing outfit behavior works without an unnecessary reference search |
 
 At review, include a short suggested commit message reflecting the actual staged scope. Example for the photo phase alone: `Add Unsplash reference photos to stylist`. Inspect uncommitted changes before suggesting a message for a combined commit; do not claim anything was committed or pushed.
+
+### Pinterest feasibility research (November 10)
+
+- Official app setup requires a Pinterest business account, verified email, an app application/review, and OAuth for the integration. Broader release has a Standard access review; approval cannot be promised.
+- `/search/pins` searches the authorized operation account's Pins. It is not equivalent to a general Pinterest website image search.
+- `/search/partner/pins` offers broader term search but the official generated SDK marks it beta and not available to all apps. Do not assume ordinary Trial/Standard access grants it.
+- Reading accessible authorized boards/Pins is a more realistic starting point for the planned optional Style DNA inspiration feature. Any use of Pin content for AI analysis also requires checking the applicable developer/content-use terms before implementation.
+- No runtime changes, credentials, or Pinterest connection were made during this discussion. Unsplash remains the working provider until a new direction is chosen.
+- Sources: https://developers.pinterest.com/docs/getting-started/connect-app/ ; https://developers.pinterest.com/docs/key-concepts/access-tiers/ ; https://github.com/pinterest/pinterest-python-generated-api-client/blob/main/docs/SearchApi.md
 
 ## Next milestone requirements
 
