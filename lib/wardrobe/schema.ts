@@ -2,7 +2,9 @@ import { z } from "zod";
 
 export const CATEGORIES = ["Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Bags", "Accessories", "Other"] as const;
 export const SEASONS = ["Spring", "Summer", "Fall", "Winter", "All season"] as const;
-export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+// Leave space for multipart fields within Vercel's 4.5 MB request limit.
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+export const MAX_STORED_IMAGE_BYTES = 10 * 1024 * 1024;
 export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 export const clothingSchema = z.object({
@@ -22,10 +24,10 @@ export const updateItemSchema = clothingSchema.extend({ updated_at: z.string().d
 export type Clothing = z.infer<typeof clothingSchema>;
 export type WardrobeItem = Clothing & { id: string; user_id: string; image_path: string | null; created_at: string; updated_at: string; image_url?: string | null };
 
-export function imageMetadataError(file: { size: number; type: string }): string | null {
+export function imageMetadataError(file: { size: number; type: string },maximum=MAX_IMAGE_BYTES): string | null {
   if (!IMAGE_TYPES.includes(file.type as typeof IMAGE_TYPES[number])) return "Choose a JPEG, PNG, or WebP image. HEIC and SVG are not supported.";
   if (file.size <= 0) return "This image is empty. Choose another photo.";
-  if (file.size > MAX_IMAGE_BYTES) return "Choose an image smaller than or equal to 10 MB.";
+  if (file.size > maximum) return `Choose an image smaller than or equal to ${maximum / 1024 / 1024} MB.`;
   return null;
 }
 

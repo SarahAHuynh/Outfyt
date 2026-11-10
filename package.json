@@ -2,13 +2,16 @@
   "name": "outfyt",
   "version": "0.1.0",
   "private": true,
+  "engines": { "node": "22.x" },
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/check-config.mjs --public-only",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.mjs tests/*.test.ts"
+    "test": "tsx --test tests/*.test.mjs tests/*.test.ts",
+    "check:config": "node scripts/check-config.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.5.2",

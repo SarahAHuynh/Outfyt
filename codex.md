@@ -44,11 +44,13 @@ These are ongoing instructions, not an installed background updater. `AGENTS.md`
 
 ## Current checkpoint: resume here
 
-**Do not rebuild the app or restart Milestone 1.** Milestones 1 and 2 and the latest Milestone 3 photo/chat follow-ups passed user acceptance. The user explicitly requested the next milestone on November 10. Milestone 4 (Style DNA) is now implemented and locally verified, awaiting hosted migration 0006 and user acceptance. Milestone 5 has not started.
+**Do not rebuild the app or restart Milestone 1.** The user explicitly authorized moving to Milestone 5 after the guided Style DNA update. Milestone 5 repository preparation is implemented and locally checked. Actual Vercel deployment, production URL/redirect configuration and hosted acceptance are still pending, so the overall milestone is not complete. Do not ask again whether to start it. The user confirmed Vercel is already connected to GitHub.
 
-Most recent implementation: the user found the Style DNA page cluttered and requested an intentional guided flow with dark purple action buttons. The page now reveals one of four steps at a time: Your aesthetic → Everyday details → optional Inspiration → Review & save. Saved profiles open as a compact summary, and pending reviews resume at the final step. Pinterest and reload controls are tucked into More options (Pinterest after saving). No additional migration or environment change is needed for this UI follow-up.
+Most recent implementation: real Settings profile reads/display-name saves with owner/version checks, actual recent looks on the dashboard, current product copy, native modal mobile navigation with keyboard/resize handling, skip/focus/reduced-motion polish, recovery/404 pages, response privacy/security headers, production email-origin validation, public-key prebuild guard, safe config diagnostics, Node 22.x pin, GitHub Actions checks, release SQL/HTTP checks, staged deployment guide and updated class demo/manual demo-data template.
 
-The underlying Milestone 4 functionality remains: editable preferences and comfort/notes, exact persisted approval, private inspiration uploads and confirmed removal, combined analysis of up to five images, safe draft merging, cached analysis/shared budget, and optional Pinterest bookmarks. Saved profile data grounds outfit generation; chat uses the same image-analysis budget/cache. Unsplash remains connected. No paid AI requests or hosted database changes were made during the guided-flow update.
+New uploads are now 4 MB to fit Vercel's 4.5 MB function request-body limit with multipart overhead. Existing stored images up to 10 MB remain readable; combined inspiration analysis allows up to 20 MB of image bytes. No new database migration is required. No deployment, commit/push, paid AI call or hosted data mutation was performed by the assistant.
+
+The guided Style DNA flow remains: one panel at a time for aesthetic → everyday details → optional inspiration → review/save. Saved profiles show a compact summary and pending reviews resume at the final step. Primary actions are dark purple. Existing safe merging, approval, cache and privacy behavior remain; Unsplash stays connected and Pinterest is bookmark-only.
 
 Previously completed Milestone 3 acceptance checklist given to the user:
 
@@ -61,11 +63,11 @@ Previously completed Milestone 3 acceptance checklist given to the user:
 
 **Pinterest decision context:** the user asked whether Pinterest API could replace Unsplash. No provider switch was made. November 10 research found ordinary search is scoped to the authorized user's Pins; broader partner search is beta and not available to all apps. Pinterest setup requires a business account, review, and OAuth. We recommended keeping Unsplash and optional board-based inspiration later. Milestone 4 implements only a URL bookmark with an explicit sync-not-configured status, not Pinterest API access or board analysis.
 
-**Resume with user setup/review:** have the user follow `docs/MILESTONE_4.md`: run `supabase/migrations/0006_style_dna.sql` once after 0005, run `supabase/checks/style-dna.sql` (expect PASS), restart `npm run dev`, and run the guide's acceptance tests. These hosted steps are not independently verified or user-confirmed yet. Existing Supabase/OpenAI settings and the private inspiration bucket are reused; no new accounts or keys are required.
+**Resume here: Vercel import and production setup.** Follow `docs/DEPLOYMENT.md` one stage at a time. User already has a Vercel account with GitHub connected; remote is `https://github.com/SarahAHuynh/Outfyt.git`, current branch `main`. Repository preparation is uncommitted unless the user has acted since this handoff. Have the user review/push it, open Vercel Add New → Project → import Outfyt, and reach the import configuration screen. Then guide production variables and first deployment, obtain only the public assigned URL, set exact APP_URL + Supabase Site URL/callbacks, redeploy, and verify live auth/uploads/AI. Never request secret values in chat.
 
-For the latest UI follow-up, if migration 0006 is already applied, simply refresh Style DNA. Do not rerun it. The user has not yet confirmed acceptance of the redesigned flow. Test the manual route with inspiration skipped, Back navigation, the optional photo-analysis route, reject/approve behavior, refresh/resume, and editing an existing saved profile. Suggested follow-up commit: `Guide users through Style DNA setup`.
+No new migration is needed for release prep. The app requires 0001–0006; if hosted status is uncertain, use the read-only `supabase/checks/release.sql` instead of rerunning migrations. Prior Milestone 4 guided-flow acceptance is not independently established by moving ahead; carry its checks into production acceptance without blocking the user's authorized progression.
 
-Next milestone only after approval: **Milestone 5, Finalization and Deployment**. Stop for Milestone 4 review first. Suggested Milestone 4 commit: `Add Style DNA preferences and inspiration analysis`.
+Suggested release-preparation commit: `Prepare Outfyt for deployment`. Do not mark Milestone 5 complete until real deployment and production acceptance pass. Vercel import/env account actions are the next dependency, not additional local feature work.
 
 ## Milestone roadmap and status
 
@@ -76,9 +78,9 @@ Next milestone only after approval: **Milestone 5, Finalization and Deployment**
 | 3: AI Stylist Agent | Real tool calling, validated owned outfits, lookbook, modifications, approvals, logs | Implemented and locally verified; latest follow-up tests user-passed; do not infer every original acceptance scenario was rerun |
 | 3 follow-ups | Persistent Saved buttons, separate chats, lookbook query fix, real Unsplash recommendation photos | Latest manual test cases user-passed on November 10 |
 | 4: Style DNA | Preferences UI, inspiration uploads, AI analysis, persistent profile, style-aware generation, optional Pinterest URL UI | Implemented; 65 tests, lint, types, build and API smoke checks pass; hosted setup/user review pending |
-| 5: Finalization and Deployment | Integration/security checks, responsive polish, production setup, Vercel, documentation, demo data; authorized Pinterest refresh if available | Pending |
+| 5: Finalization and Deployment | Integration/security checks, responsive polish, production setup, Vercel, documentation, demo data | Repository prep locally checked (69 tests/build/types/lint/config/audit/smokes); Vercel deployment and hosted acceptance pending |
 
-Milestone 4 is implemented, but do not mark its live acceptance complete until the user confirms. Deployment and Pinterest synchronization remain unconfigured and unverified.
+Milestone 4 is implemented and the user approved progressing to Milestone 5. Do not invent explicit acceptance of each historical test. Production deployment is pending; Pinterest synchronization remains unconfigured.
 
 ## Accepted design and conversation decisions
 
@@ -106,6 +108,7 @@ At this checkpoint: Next.js 16.4.5, React 19, Tailwind 3, Supabase SSR 0.5.2, Su
 | `app/api/wardrobe/` | Wardrobe CRUD, image analysis, deletion handling |
 | `app/api/stylist/` | Chat requests/history, chat creation, pending-action decisions |
 | `app/api/outfits/` | Saved-look operations |
+| `app/api/profile/`, `components/profile-editor.tsx` | Owner-scoped display-name update with version checks and persistent success feedback |
 | `app/api/style-dna/`, `components/style/editor.tsx` | Profile review, inspiration gallery/upload/analysis/removal, Pinterest reference UI |
 | `lib/style/` | Preference schemas, additive suggestion merge, structured vision, safe upload service, private reads and analysis cache/budget |
 | `lib/auth/`, `lib/supabase/` | Authentication, email feedback, session-aware clients |
@@ -121,6 +124,8 @@ At this checkpoint: Next.js 16.4.5, React 19, Tailwind 3, Supabase SSR 0.5.2, Su
 | `lib/prompts/` | Stylist, clothing analysis, outfit generation, Style DNA analysis prompts |
 | `supabase/migrations/`, `supabase/checks/` | Ordered schema updates and rollback-only SQL checks |
 | `tests/` | Mocked-provider tests, embedded PostgreSQL tests, HTTP smoke scripts |
+| `scripts/check-config.mjs`, `.github/workflows/ci.yml` | Safe configuration diagnostics/public-key build guard and GitHub lint/test/build/type checks |
+| `docs/DEPLOYMENT.md`, `docs/RELEASE_CHECKS.md`, `demo/` | Staged Vercel setup, release review, optional manual demo-data template |
 
 ## Core behavior and safeguards to preserve
 
@@ -159,6 +164,8 @@ Milestone 4 adds migration 0006. The guide `docs/MILESTONE_4.md` contains exact 
 
 Existing local project path: `C:\Users\sarahhuynh\Outfyt`; shell: PowerShell. On another machine use the actual checkout path, not this user's absolute paths.
 
+Node.js 22.x is pinned in package.json and lockfile metadata for Vercel/CI consistency. Runtime verified locally: 22.14.0. The code's existing route durations remain 90/120/180 seconds; verify Fluid compute and actual hosting-plan support during deployment. Vercel's verified documentation currently allows 300 seconds on Hobby Fluid compute, but the user's project settings/live requests have not been tested.
+
 Keep `.env.local` private and ignored. Start with `.env.example` only when setting up a new environment; never overwrite an existing secret file. Variable names:
 
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: public project connection values.
@@ -169,7 +176,7 @@ Keep `.env.local` private and ignored. Start with `.env.example` only when setti
 
 A privileged Supabase service-role key is not required for the current app. Never add one to bypass RLS failures. A ChatGPT subscription is separate from OpenAI API billing; guide a small API budget when new account setup is actually needed.
 
-The user confirmed Supabase project creation, initial database checks, auth settings, and working signup confirmation. Clothing analysis worked and passed user tests, establishing earlier OpenAI setup. Unsplash key readiness and a live search were confirmed. GitHub push/deployment state and custom SMTP configuration are not established by this handoff; inspect or ask only when relevant.
+The user confirmed Supabase project creation, initial database checks, auth settings and working signup confirmation. Clothing analysis passed user tests. Unsplash key readiness and a live search were confirmed. On November 10 the user confirmed Vercel is connected to GitHub. Existing branch main contains the previous guided Style DNA commit; the new release edits have not been committed/pushed by the assistant. No assigned production URL or custom SMTP setup is confirmed.
 
 | Migration (run once, in order) | Purpose | Relevant SQL check |
 | --- | --- | --- |
@@ -191,15 +198,16 @@ These files live in `supabase/migrations/` and `supabase/checks/`. Repository mi
 
 ## Verification and manual review
 
-Latest verification for Milestone 4 and its guided-flow UI follow-up on November 10:
+Latest Milestone 5 repository verification on November 10:
 
-- **65 automated tests passed**, including mocked vision/Responses requests, safe merging/upload cleanup, outfit grounding, and PGlite execution of all six migrations and SQL checks.
+- **69 automated tests passed**, including new production callback validation, profile input/version/ownership checks, upload-versus-legacy-image limits, and PGlite execution of all six migrations plus profile/release SQL checks.
 - Lint, TypeScript checking, and production build passed.
-- Signed-out/cross-origin HTTP smoke checks passed on a local production server, including all new Style DNA routes. These do not replace signed-in hosted acceptance tests.
+- All four HTTP smoke scripts passed against a local production server: auth, wardrobe, stylist (including profile), release headers/404/referrer/no-store checks. These do not replace signed-in hosted acceptance or browser keyboard tests.
 - A prior live Unsplash search returned HTTP 200 and a photo. This milestone made no paid model calls; external AI requests were mocked.
-- The guided-flow follow-up reran all 65 tests and passed lint, TypeScript and the production build. Earlier API smoke results are from the original Milestone 4 implementation, not a new signed-in walkthrough of the redesigned UI. Interactive browser acceptance remains for the user.
+- `npm run check:config` passed for local configuration, printing names/status only. `.env.local` is ignored and untracked. The production npm dependency audit reported 0 known vulnerabilities at this checkpoint, not a guarantee about application security.
+- GitHub Actions workflow is written but has not run on GitHub yet. Actual Vercel deployment, public host configuration, SMTP, paid provider operations and interactive/mobile browser acceptance remain pending.
 
-These are actual results from the Milestone 4 implementation session, not checks rerun automatically in a new session. Windows initially blocked test/build workers with EPERM; rerunning with the required execution approval passed.
+These are actual release-preparation results, not automatic checks in a future session. Windows initially blocked test/build workers with EPERM; rerunning with the required execution approval passed. No dependencies were upgraded; package/lockfile changes pin the tested Node major and add release scripts.
 
 Standard commands from the repository root:
 
@@ -254,13 +262,13 @@ At review, include a short suggested commit message reflecting the actual staged
 
 ## Next milestone requirements
 
-Milestone 4 is implemented. Await its hosted migration/acceptance review before Milestone 5. See `docs/MILESTONE_4.md` for the full manual checklist: review/reject/approve preferences, refresh persistence, stale edits, private multi-image upload, combined analysis, cached repeats, draft merging, confirmed removal, bookmark validation, style-aware outfits, and second-user isolation.
+Milestone 5 is authorized and repository preparation is implemented. Next is the staged account-dependent deployment in `docs/DEPLOYMENT.md`. Carry the Milestone 4 regression checklist into hosted acceptance: exact approvals, private images, cached analysis, safe merging, bookmark validation, style-aware outfits and second-user isolation.
 
 Implementation decisions to preserve:
 
 - `Review changes` creates an immutable pending proposal. `Approve changes` saves the exact reviewed profile, including comfort preferences and notes. `Keep unchanged` rejects. Stale profile versions reject review or approval instead of silently overwriting newer data.
 - Inspiration suggestions merge into the editable draft only when the user requests it. Existing choices, dislikes, comfort, notes and non-empty summary are preserved; empty summary may be filled. The merged draft still requires review/approval.
-- Up to 50 private inspiration images, JPEG/PNG/WebP, 10 MB each. Analyze 1–5 together; one active analysis/user, 10 new analyses/user/clock hour, shared by chat and page. Completed results for matching image IDs are reused regardless of order; failures count against budget.
+- Up to 50 private inspiration images, JPEG/PNG/WebP. New uploads are 4 MB each; existing images up to 10 MB remain supported, with a combined 20 MB binary analysis input cap. Analyze 1–5 together; one active analysis/user, 10 new analyses/user/clock hour, shared by chat and page. Matching completed analyses are reused regardless of order; failures count against budget.
 - Image removal has an owner-bound ten-minute confirmation token. It clears associated analyses and keeps saved preferences. Storage cleanup can be retried with the same resolved token. Upload retries/read-before-cleanup protect committed images when a database response is lost.
 - Signed inspiration previews expire after ten minutes. `More options → Reload saved progress` refreshes them and restores the saved profile or pending review, resetting unsaved edits. Other uploads/analysis operations preserve the draft and its base version.
 - The wizard shows only one panel at a time and preserves draft/selection state across Back/Continue navigation. New profiles start at aesthetics; saved profiles start at the completion summary; a pending approval resumes at Review & save. Continue alone never persists unfinished form fields.
@@ -282,6 +290,8 @@ Milestone 5 includes responsive polish, integration/security/error review, GitHu
 - `docs/CHAT_UPDATES.md`: chat/save/lookbook changes and regression tests; its final photo-status note predates integration.
 - `docs/PHOTO_SETUP.md`: current Unsplash setup, migration, limits, and test cases.
 - `docs/MILESTONE_4.md`: latest Style DNA setup, implementation, limits, acceptance tests and suggested commit message.
+- `docs/DEPLOYMENT.md`: current Vercel/GitHub setup stages, exact production variables/redirects, runtime limits, production acceptance and troubleshooting.
+- `docs/RELEASE_CHECKS.md`: repository review scope and verification commands; no deployment/security certification implied.
 - `DEMO_GUIDE.md`: class demonstration workflow.
 
 ## Handoff maintenance checklist

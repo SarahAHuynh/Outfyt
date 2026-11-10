@@ -10,8 +10,9 @@ type AppShellProps = {
 export function AppShell({ children, title, eyebrow, contentClassName }: AppShellProps) {
   return (
     <div className="min-h-screen bg-[#f9f7f4] md:flex">
+      <a href="#main-content" className="absolute left-4 top-4 z-50 -translate-y-32 rounded-full bg-[#594273] px-4 py-3 text-sm font-semibold text-white focus:translate-y-0">Skip to content</a>
       <Sidebar />
-      <main className="min-w-0 flex-1 px-5 pb-12 pt-20 md:px-10 md:pt-10 lg:px-14">
+      <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 px-5 pb-12 pt-20 md:px-10 md:pt-10 lg:px-14">
         <div className={contentClassName}>
           <header className="mb-10">
             <p className="text-xs font-semibold uppercase tracking-[.2em] text-[#a69ac5]">{eyebrow ?? "outfyt studio"}</p>

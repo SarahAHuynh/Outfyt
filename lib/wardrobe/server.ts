@@ -23,7 +23,7 @@ export async function wardrobeContext() {
 // Bound the complete multipart body even if a client omits Content-Length.
 export async function readImageForm(request: Request) {
   const maxBodyBytes = MAX_IMAGE_BYTES + 64 * 1024;
-  if (Number(request.headers.get("content-length")) > maxBodyBytes) throw new WardrobeError("Upload exceeds the 10 MB image limit.", 413);
+  if (Number(request.headers.get("content-length")) > maxBodyBytes) throw new WardrobeError("Upload exceeds the 4 MB image limit.", 413);
   if (!request.headers.get("content-type")?.startsWith("multipart/form-data")) throw new WardrobeError("Send the image using the upload form.");
   const buffer = await readBoundedBytes(request, maxBodyBytes);
   try { return await new Response(buffer, { headers: { "content-type": request.headers.get("content-type")! } }).formData(); }

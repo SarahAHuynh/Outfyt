@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import { authErrorMessage, credentialsSchema, signupSchema } from "@/lib/auth/validation";
 import { getAuthRetryAt } from "@/lib/auth/rate-limit";
+import { AppUrlError,confirmationRedirectUrl } from "@/lib/auth/app-url";
 
 type AuthState = { error?: string; message?: string; retryAt?: number };
 
@@ -28,10 +29,10 @@ export async function authenticate(_previous: AuthState, form: FormData): Promis
     const supabase = await createClient({ onAuthRateLimit: value => { headerRetryAt = value; } });
     if (mode === "signup") {
       const data = signupSchema.parse(input);
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const emailRedirectTo=confirmationRedirectUrl({ appUrl:process.env.NEXT_PUBLIC_APP_URL,vercel:process.env.VERCEL });
       const { data: result, error } = await supabase.auth.signUp({
         email: data.email, password: data.password,
-        options: { data: { display_name: data.displayName }, emailRedirectTo: new URL("/auth/callback", appUrl).toString() },
+        options: { data: { display_name: data.displayName }, emailRedirectTo },
       });
       if (error) return authFailure(error, headerRetryAt);
       if (!result.session) return { message: "Check your email for a confirmation link. If you already have an account, switch to Sign in. Delivery may take a minute; check spam too." };
@@ -39,7 +40,8 @@ export async function authenticate(_previous: AuthState, form: FormData): Promis
       const { error } = await supabase.auth.signInWithPassword(parsed.data);
       if (error) return authFailure(error, headerRetryAt);
     }
-  } catch {
+  } catch(error) {
+    if (error instanceof AppUrlError) return { error:error.message };
     return { error: "Could not connect to Supabase. Check your connection and local project settings, then try again." };
   }
   revalidatePath("/", "layout");
@@ -52,10 +54,12 @@ export async function resendConfirmation(_previous: AuthState, form: FormData): 
   try {
     let headerRetryAt: number | undefined;
     const supabase = await createClient({ onAuthRateLimit: value => { headerRetryAt = value; } });
-    const { error } = await supabase.auth.resend({ type: "signup", email: parsed.data, options: { emailRedirectTo: new URL("/auth/callback", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").toString() } });
+    const emailRedirectTo=confirmationRedirectUrl({ appUrl:process.env.NEXT_PUBLIC_APP_URL,vercel:process.env.VERCEL });
+    const { error } = await supabase.auth.resend({ type: "signup", email: parsed.data, options: { emailRedirectTo } });
     if (error) return authFailure(error, headerRetryAt);
     return { message: "Request accepted. A new email is only sent for an account that still needs confirmation. If you already confirmed your email, sign in instead. Otherwise, check your inbox and spam folder." };
-  } catch {
+  } catch(error) {
+    if (error instanceof AppUrlError) return { error:error.message };
     return { error: "Could not connect to the email service. Please try again shortly." };
   }
 }

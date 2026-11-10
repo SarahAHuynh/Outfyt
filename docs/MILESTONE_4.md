@@ -71,7 +71,7 @@ The private `inspiration-images` bucket was created by migration 0001 and should
 | Prepare a proposal, change/save the profile in another tab, then approve the old proposal | Stale approval rejected; newer saved preferences remain |
 | Leave an editor open, save from another tab, then try reviewing from the old editor | Conflict message asks you to load saved preferences; no silent overwrite |
 | Upload 2–3 fashion inspiration images | Private gallery previews persist after refresh; closet remains unchanged |
-| Try unsupported SVG/HEIC or an image over 10 MB | Helpful validation; invalid upload not saved |
+| Try unsupported SVG/HEIC or a new image over 4 MB | Helpful validation; invalid upload not saved |
 | Select several photos and analyze | Spinner, then structured shared-style suggestions; saved profile unchanged |
 | Analyze the same selection again, including a different selection order | Cached result; message says no new AI request needed |
 | Add suggestions & continue | Existing choices, dislikes, notes, comfort and non-empty summary preserved; review opens and choices remain editable through Back |
@@ -91,7 +91,7 @@ Manual profiles, uploads, and bookmarks do not require an AI call. If OpenAI acc
 - `app/api/style-dna/`: profile review, upload, analysis, persisted image deletion, Pinterest bookmark.
 - `components/style/editor.tsx`: actual preferences/gallery/analysis/review UI.
 - `0006_style_dna.sql`: additive migration; preserves the prior agent approval checks while extending approved comfort/notes edits. Old agent proposals preserve those fields.
-- Up to 50 owned inspiration images, 10 MB each; up to five per analysis; 10 new analyses/user/clock hour, shared by chat and page. Failed attempts consume the budget. Completed analyses for the same image IDs are reused independent of order. Uploads are immutable through the UI; no arbitrary remote URLs are fetched.
+- Up to 50 owned inspiration images; new uploads are now 4 MB each to fit Vercel hosting (Milestone 5 change). Older stored images up to 10 MB remain supported. Analyze up to five together with a 20 MB combined binary limit; 10 new analyses/user/clock hour, shared by chat and page. Failed attempts consume the budget. Completed analyses for the same image IDs are reused independent of order. Uploads are immutable through the UI; no arbitrary remote URLs are fetched.
 - Analysis records never update the profile. Private image IDs and paths are server-checked before downloading. Deletion invalidates analyses containing that image. Signed previews expire after ten minutes; More options → Reload saved progress refreshes them.
 - Structured output validates fashion relevance and suggested fields. Embedded text is untrusted input, not executable instructions. Vision can be imperfect; review remains required.
 - Development tests mock OpenAI; embedded PostgreSQL executes the migrations and policies. Hosted Auth/Storage and real fashion-photo analysis require the manual checks above.
@@ -102,7 +102,7 @@ Suggested commit message: `Add Style DNA preferences and inspiration analysis`.
 
 Guided-flow follow-up commit: `Guide users through Style DNA setup`. This UI change passed the existing 65 tests, lint, type checking and production build. The browser interaction checklist above still needs user acceptance.
 
-Stop here for user review. Milestone 5 (finalization and deployment) starts only after approval.
+The user subsequently authorized Milestone 5. See `docs/DEPLOYMENT.md` for release setup; retain these tests for regression and production acceptance.
 
 Official references used for the image-analysis implementation:
 - https://developers.openai.com/api/docs/guides/images-vision

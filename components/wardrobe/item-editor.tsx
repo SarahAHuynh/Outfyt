@@ -80,7 +80,7 @@ export function ItemEditor({ item, aiEnabled, onClose, onSaved }: { item?: Wardr
         <div className="grid gap-6 sm:grid-cols-[180px_1fr]">
           <div>
             <div className="flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl border border-[#ebe7e7] bg-[#f2eef5]">{preview ? <img src={preview} alt="Clothing preview" className="h-full w-full object-contain" /> : <ImageIcon aria-hidden="true" className="h-10 w-10 text-[#a69ac5]" />}</div>
-            {!item && <><label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[#d9d0dc] bg-white px-3 py-2 text-sm"><Upload className="h-4 w-4" />{image ? "Change photo" : "Choose photo"}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={event => { chooseImage(event.target.files?.[0]); event.target.value = ""; }} /></label><p className="mt-2 text-xs leading-5 text-[#756e78]">Optional photo. JPEG, PNG or WebP, up to 10 MB.</p></>}
+            {!item && <><label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[#d9d0dc] bg-white px-3 py-2 text-sm"><Upload className="h-4 w-4" />{image ? "Change photo" : "Choose photo"}<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={event => { chooseImage(event.target.files?.[0]); event.target.value = ""; }} /></label><p className="mt-2 text-xs leading-5 text-[#756e78]">Optional photo. JPEG, PNG or WebP, up to 4 MB.</p></>}
           </div>
           <div className="space-y-4">
             {!item && <div className="rounded-2xl border border-[#e0d7e9] bg-[#f4f0f7] p-4">

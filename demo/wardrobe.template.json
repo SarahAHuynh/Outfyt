@@ -1,0 +1,11 @@
+{
+  "instructions": "Optional manual-entry examples for a separate account you control. Replace these with clothes you actually own and upload your own permitted photos below 4 MB. This file is not loaded into the app or database.",
+  "pieces": [
+    { "name": "Navy casual shirt", "category": "Tops", "primary_color": "Navy", "style_tags": ["Casual", "Tomboy"] },
+    { "name": "White everyday top", "category": "Tops", "primary_color": "White", "style_tags": ["Casual", "Minimalist"] },
+    { "name": "Blue straight jeans", "category": "Bottoms", "primary_color": "Blue", "style_tags": ["Casual"] },
+    { "name": "Olive casual trousers", "category": "Bottoms", "primary_color": "Olive", "style_tags": ["Casual", "Utility"] },
+    { "name": "Black loafers", "category": "Shoes", "primary_color": "Black", "style_tags": ["Casual", "Preppy"] }
+  ],
+  "style_notes": "Example only: relaxed, comfortable outfits for walking to class. Set your own preferences through the Style DNA review flow."
+}

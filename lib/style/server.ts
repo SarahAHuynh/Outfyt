@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { wardrobeContext } from "@/lib/wardrobe/server";
 import { WardrobeError } from "@/lib/wardrobe/service";
-import { imageExtension,imageMetadataError } from "@/lib/wardrobe/schema";
+import { imageExtension,imageMetadataError,MAX_STORED_IMAGE_BYTES } from "@/lib/wardrobe/schema";
 import { styleProposalSchema,type PendingAction } from "@/lib/stylist/schema";
 import { EMPTY_PROFILE,pinterestSchema,profileSchema,type StyleView } from "./schema";
 import { analyzeStyleImages } from "./analysis";
@@ -53,12 +53,14 @@ export async function runInspirationAnalysis(context:Context,ids:string[]) {
   try {
     const rows=await supabase.from("inspiration_images").select("id,image_path").eq("user_id",user.id).in("id",ids);styleRpc(rows.error);
     if (rows.data?.length!==ids.length) throw new WardrobeError("An inspiration image is unavailable. Refresh and select your images again.",404);
-    const images=[];
+    const images=[];let totalBytes=0;
     for (const row of rows.data) {
       if (!row.image_path.startsWith(`${user.id}/`)) throw new WardrobeError("Inspiration image unavailable.",404);
       const download=await supabase.storage.from(INSPIRATION_BUCKET).download(row.image_path);
       if (download.error || !download.data) throw new WardrobeError("Could not read an inspiration image. Refresh or upload it again.",503);
-      const issue=imageMetadataError(download.data);if (issue) throw new WardrobeError(issue,400);
+      const issue=imageMetadataError(download.data,MAX_STORED_IMAGE_BYTES);if (issue) throw new WardrobeError(issue,400);
+      totalBytes+=download.data.size;
+      if (totalBytes>20*1024*1024) throw new WardrobeError("These inspiration images are too large together. Select fewer photos and try again.",400);
       const bytes=new Uint8Array(await download.data.arrayBuffer());
       if (!imageExtension(bytes,download.data.type)) throw new WardrobeError("An inspiration image has an invalid format.",400);
       images.push({ bytes,mime:download.data.type });
