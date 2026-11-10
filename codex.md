@@ -44,13 +44,15 @@ These are ongoing instructions, not an installed background updater. `AGENTS.md`
 
 ## Current checkpoint: resume here
 
-**Do not rebuild the app or restart Milestone 1.** The user explicitly authorized moving to Milestone 5 after the guided Style DNA update. Milestone 5 repository preparation is implemented and locally checked. Actual Vercel deployment, production URL/redirect configuration and hosted acceptance are still pending, so the overall milestone is not complete. Do not ask again whether to start it. The user confirmed Vercel is already connected to GitHub.
+**Do not rebuild the app or restart Milestone 1.** Milestone 5 repository preparation is implemented. The user supplied the live URL **https://outfyt-dun.vercel.app/** on November 10. Public deployment, the updated homepage and all four signed-out smoke scripts are now verified against that URL. Production account configuration, email confirmation, signed-in Storage/AI/data operations and final user acceptance are not yet confirmed, so the overall milestone is not complete. Do not repeat account connection/import instructions.
 
 Most recent follow-up: the user requested a simpler, more appealing public home page. `app/page.tsx` now has only the Start styling primary CTA, with the brand linking home; Open studio, How it works and Your style, decoded navigation links are removed. Abstract shapes are replaced by a responsive editorial collage of real clothing photos (outfit flat lay, neutral clothes rail, white knitwear). The CTA is dark purple and the cream/lavender aesthetic is retained. Small photographer credits sit below the collage. See `docs/LANDING_PHOTOS.md` for sources and implementation details. No new migrations or environment variables are required.
 
+Latest request: explain what remains and provide a demo-video narration/script with exact screen actions. `DEMO_GUIDE.md` now includes the concrete production URL/redirect values, final signed-in checks, roughly two-minute word-for-word narration, three copyable agent prompts, and optional vision/technical clips. No runtime code changed for this documentation update. Suggested commit: `Add narrated demo script and launch checklist`.
+
 The photos are fixed API-provided Unsplash hotlinks, not private wardrobe items. Next Image is unoptimized to retain direct provider image requests and ixid tracking; no photo-search request or secret key is required per page visit. Two one-time Unsplash searches selected the assets. The first image is preloaded. All three assets were visually inspected and returned HTTP 200 image/jpeg. Lint, standalone TypeScript and the production build passed for this follow-up; do not imply the entire 69-test suite was rerun just for this visual change.
 
-A local production-page HTTP check also passed: one Start styling link to /dashboard, none of the three removed navigation labels, and three rendered clothing images with attribution. Full interactive/mobile visual acceptance remains for the user. Suggested commit: `Refresh landing page with clothing photography`. No deployment or push of this follow-up was performed by the assistant; include these changes in the next user-managed Vercel release.
+A local production-page HTTP check passed, and the same expected homepage was subsequently verified live at `https://outfyt-dun.vercel.app`: one Start styling link, none of the removed labels and three images. Full interactive/mobile visual acceptance remains for the user. No deployment or push was performed by the assistant; the user-managed site now contains the landing changes.
 
 Previous release preparation: real Settings profile reads/display-name saves with owner/version checks, actual recent looks on the dashboard, current product copy, native modal mobile navigation with keyboard/resize handling, skip/focus/reduced-motion polish, recovery/404 pages, response privacy/security headers, production email-origin validation, public-key prebuild guard, safe config diagnostics, Node 22.x pin, GitHub Actions checks, release SQL/HTTP checks, staged deployment guide and updated class demo/manual demo-data template.
 
@@ -69,13 +71,15 @@ Previously completed Milestone 3 acceptance checklist given to the user:
 
 **Pinterest decision context:** the user asked whether Pinterest API could replace Unsplash. No provider switch was made. November 10 research found ordinary search is scoped to the authorized user's Pins; broader partner search is beta and not available to all apps. Pinterest setup requires a business account, review, and OAuth. We recommended keeping Unsplash and optional board-based inspiration later. Milestone 4 implements only a URL bookmark with an explicit sync-not-configured status, not Pinterest API access or board analysis.
 
-**Resume here: production variables and first deployment.** On November 10 the user reported **"import screen ready"**. Do not repeat Vercel account/GitHub connection or import instructions. Follow Stage 3 of `docs/DEPLOYMENT.md`: copy the five existing Supabase/OpenAI/Unsplash variables from the user's private local configuration into Vercel Production, preserve server-only key names, leave APP_URL unset if the assigned domain is not known, and start the first build. The user must enter credentials privately; never request values in chat. A first deployment is not yet confirmed. Next obtain only the public assigned website URL or sanitized build error, then guide exact APP_URL + Supabase Site URL/callbacks, redeployment and hosted acceptance. Signup/resend deliberately do not create confirmation links on Vercel until APP_URL is configured.
+**Resume here: final live feature rehearsal and demo recording.** The live domain is `https://outfyt-dun.vercel.app`. The user reported done for the Vercel APP_URL Config/redeploy stage and then done for the Supabase Site URL/callback allowlist stage and its requested confirmation/sign-in checks. Treat these as user-reported completion, not an independent authenticated inspection. Do not repeat URL configuration unless a new error appears. Next is one live walkthrough: private clothing upload/analysis, saved Style DNA, generate/save/rename/refresh a look, reject deletion and verify the look remains, plus second-user isolation. The assistant has not performed signed-in mutations or paid model calls. Use the existing narration in DEMO_GUIDE.md after the rehearsal passes; no new feature milestone is needed.
 
-Repository remote is `https://github.com/SarahAHuynh/Outfyt.git`, branch `main`. The user's import-ready message establishes the UI checkpoint, not independent verification of their latest push, CI run or production tests. No commit/push/deployment was performed by the assistant.
+Latest setup checkpoint: the user reported **done** for Vercel NEXT_PUBLIC_APP_URL as Config and redeployment, then **done** for Supabase Site URL https://outfyt-dun.vercel.app and redirect URLs /auth/callback and /auth/confirm on that origin. The requested auth checks were part of the latter stage; they are user-reported, not independently executed. Official docs checked November 10: saved Secrets cannot be converted to Config in place. Keep genuine API credentials Secret and preserve the NEXT_PUBLIC_APP_URL name. No repeated URL setup is needed without a new failure.
+
+Repository remote is `https://github.com/SarahAHuynh/Outfyt.git`, branch `main`. The landing-page commit was observed locally as `refresh landing page with clothing pics`; its expected homepage is now verified live. GitHub Actions run status was not inspected. No commit/push/deployment was performed by the assistant.
 
 No new migration is needed for release prep. The app requires 0001–0006; if hosted status is uncertain, use the read-only `supabase/checks/release.sql` instead of rerunning migrations. Prior Milestone 4 guided-flow acceptance is not independently established by moving ahead; carry its checks into production acceptance without blocking the user's authorized progression.
 
-Suggested release-preparation commit: `Prepare Outfyt for deployment`. Do not mark Milestone 5 complete until real deployment and production acceptance pass. Vercel import/env account actions are the next dependency, not additional local feature work.
+The release-preparation commit suggestion was `Prepare Outfyt for deployment`. Public deployment is now verified; do not mark Milestone 5 complete until signed-in production acceptance passes. Next is the user's live-account rehearsal and demo recording, with URL/settings confirmation only if not already done. No additional feature work is required merely to record the demo.
 
 ## Milestone roadmap and status
 
@@ -86,9 +90,9 @@ Suggested release-preparation commit: `Prepare Outfyt for deployment`. Do not ma
 | 3: AI Stylist Agent | Real tool calling, validated owned outfits, lookbook, modifications, approvals, logs | Implemented and locally verified; latest follow-up tests user-passed; do not infer every original acceptance scenario was rerun |
 | 3 follow-ups | Persistent Saved buttons, separate chats, lookbook query fix, real Unsplash recommendation photos | Latest manual test cases user-passed on November 10 |
 | 4: Style DNA | Preferences UI, inspiration uploads, AI analysis, persistent profile, style-aware generation, optional Pinterest URL UI | Implemented; 65 tests, lint, types, build and API smoke checks pass; hosted setup/user review pending |
-| 5: Finalization and Deployment | Integration/security checks, responsive polish, production setup, Vercel, documentation, demo data | Repository prep locally checked (69 tests/build/types/lint/config/audit/smokes); Vercel deployment and hosted acceptance pending |
+| 5: Finalization and Deployment | Integration/security checks, responsive polish, production setup, Vercel, documentation, demo data | Live public site + all four signed-out smoke scripts pass; signed-in acceptance and final demo/submission pending |
 
-Milestone 4 is implemented and the user approved progressing to Milestone 5. Do not invent explicit acceptance of each historical test. Production deployment is pending; Pinterest synchronization remains unconfigured.
+Milestone 4 is implemented and the user approved progressing to Milestone 5. Do not invent explicit acceptance of each historical test. Production public pages are verified; authenticated acceptance is still pending. Pinterest synchronization remains unconfigured.
 
 ## Accepted design and conversation decisions
 
@@ -214,7 +218,8 @@ Latest Milestone 5 repository verification on November 10:
 - All four HTTP smoke scripts passed against a local production server: auth, wardrobe, stylist (including profile), release headers/404/referrer/no-store checks. These do not replace signed-in hosted acceptance or browser keyboard tests.
 - A prior live Unsplash search returned HTTP 200 and a photo. This milestone made no paid model calls; external AI requests were mocked.
 - `npm run check:config` passed for local configuration, printing names/status only. `.env.local` is ignored and untracked. The production npm dependency audit reported 0 known vulnerabilities at this checkpoint, not a guarantee about application security.
-- GitHub Actions workflow is written but has not run on GitHub yet. Actual Vercel deployment, public host configuration, SMTP, paid provider operations and interactive/mobile browser acceptance remain pending.
+- GitHub Actions workflow is written; its GitHub run status was not inspected. Public Vercel deployment is verified. Dashboard environment settings, SMTP, paid provider operations and interactive/mobile acceptance remain unverified.
+- Later live verification on November 10: all four HTTP smoke scripts passed against `https://outfyt-dun.vercel.app`, including signed-out API rejection, cross-origin mutations, protected redirects, 404 and privacy/security headers. A public homepage check returned HTTP 200 with one Start styling action, no removed navigation labels, three images and the expected collage. The generic web-reader tool could not open the site, but direct HTTPS requests and the smoke scripts succeeded. Do not treat the web-reader limitation as a deployment failure. Signed-in/account-dashboard settings were not checked.
 
 These are actual release-preparation results, not automatic checks in a future session. Windows initially blocked test/build workers with EPERM; rerunning with the required execution approval passed. No dependencies were upgraded; package/lockfile changes pin the tested Node major and add release scripts.
 
@@ -271,7 +276,7 @@ At review, include a short suggested commit message reflecting the actual staged
 
 ## Next milestone requirements
 
-Milestone 5 is authorized and repository preparation is implemented. Next is the staged account-dependent deployment in `docs/DEPLOYMENT.md`. Carry the Milestone 4 regression checklist into hosted acceptance: exact approvals, private images, cached analysis, safe merging, bookmark validation, style-aware outfits and second-user isolation.
+Milestone 5 repository preparation and public deployment are verified. Next is final signed-in acceptance and the narrated video in `DEMO_GUIDE.md`. Carry the Milestone 4 regression checklist into hosted acceptance: exact approvals, private images, cached analysis, safe merging, bookmark validation, style-aware outfits and second-user isolation.
 
 Implementation decisions to preserve:
 

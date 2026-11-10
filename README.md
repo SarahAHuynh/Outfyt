@@ -17,7 +17,7 @@ Outfyt is a digital wardrobe and personal AI stylist built for CS4680 Prompt Eng
 | Dashboard | Actual counts and recent saved looks, compact shortcuts |
 | Pinterest | Optional board bookmark only; no OAuth, Pin fetching or synchronization |
 
-Milestones 1 and 2 and the latest Milestone 3 photo/chat follow-ups passed user testing. The user authorized moving from Milestone 4 to Milestone 5. Milestone 5 repository preparation is implemented; **public deployment and production acceptance remain pending**. Moving ahead is not a claim that every earlier hosted test was independently rerun.
+Milestones 1 and 2 and the latest Milestone 3 photo/chat follow-ups passed user testing. The user authorized moving from Milestone 4 to Milestone 5. The public site is live at **https://outfyt-dun.vercel.app/** and all four signed-out smoke scripts passed against it. **Final signed-in production acceptance and the demo recording remain pending.** Moving ahead is not a claim that every earlier hosted test was independently rerun.
 
 ## Stack and architecture
 
@@ -116,7 +116,7 @@ These checks use no cookies, live mutations or paid calls. GitHub Actions repeat
 
 ## Deployment and demo
 
-Use the detailed staged [Vercel deployment guide](docs/DEPLOYMENT.md). The user already connected Vercel to GitHub; next is reviewing/pushing the release and importing `SarahAHuynh/Outfyt`. Production environment values, exact Supabase redirect URLs, the assigned domain, actual runtime settings and production tests still need confirmation. No public deployment is claimed yet.
+Use the detailed staged [Vercel deployment guide](docs/DEPLOYMENT.md) for configuration and future releases. The public site is verified at https://outfyt-dun.vercel.app/; environment dashboard values, exact Supabase email redirects, runtime settings and signed-in data/AI behavior still need final confirmation. The [demo guide](DEMO_GUIDE.md) now includes word-for-word narration and exact screen actions.
 
 [DEMO_GUIDE.md](DEMO_GUIDE.md) provides a reproducible 1–2 minute class demo, preparation checklist and failure plan. [Demo data template](demo/wardrobe.template.json) is an optional manual-entry starting point for a separate account; replace examples with garments you actually own. It is never loaded automatically into anyone's account.
 

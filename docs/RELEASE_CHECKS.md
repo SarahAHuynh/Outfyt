@@ -33,8 +33,8 @@ Run the four smoke scripts in `tests/` against a started local production server
 
 ## Remaining external verification
 
-Local results on November 10: all 69 automated tests, lint, TypeScript, production build, configuration diagnostics and all four signed-out HTTP smoke scripts passed. The production npm dependency audit reported no known vulnerabilities. These are local results; GitHub Actions has not yet run and no public deployment is claimed.
+Local results on November 10: all 69 automated tests, lint, TypeScript, production build, configuration diagnostics and all four signed-out HTTP smoke scripts passed. The production npm dependency audit reported no known vulnerabilities. GitHub Actions run status has not been inspected.
 
-The user must verify production environment variables, real Supabase migrations/RLS/Storage, exact redirect domains, permitted email delivery, Fluid compute/runtime settings, live paid AI behavior, mobile keyboard interaction and the class demo. No final public deployment or hosted acceptance is claimed. Pinterest remains optional reference-only; current Unsplash Demo limits must be reviewed before a public production release.
+Later on November 10, all four HTTP smoke scripts also passed against the live site https://outfyt-dun.vercel.app/. Its updated homepage returned HTTP 200 with one Start styling action and three clothing photos. Public deployment is verified. The user must still verify production environment settings, hosted migrations/Storage, exact email redirect behavior, runtime settings, live paid AI behavior, signed-in privacy, mobile keyboard interaction and the class demo. Pinterest remains optional reference-only; review Unsplash's production requirements before a broader public release.
 
 Use `docs/DEPLOYMENT.md` for the staged external setup and acceptance checklist. Keep `codex.md` updated with actual results and the exact next user action.

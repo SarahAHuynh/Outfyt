@@ -2,6 +2,8 @@
 
 The user has confirmed Vercel is already connected to GitHub. The repository remote is `SarahAHuynh/Outfyt`. Local release preparation is separate from actually deploying or passing production acceptance. No deployment, Git commit/push, production credential change or hosted migration has been performed by the assistant.
 
+Current checkpoint, November 10: the user supplied the live URL **https://outfyt-dun.vercel.app/**. All four signed-out smoke scripts passed against it, and the updated single-CTA/clothing-photo homepage is present. Public deployment existence is now verified. Exact dashboard environment settings, hosted SQL setup and signed-in email/Storage/AI workflows remain unverified; complete the corresponding acceptance checks rather than redoing project import. `DEMO_GUIDE.md` now contains the concrete domain settings and word-for-word video script.
+
 Follow one stage at a time. If a label differs, use the equivalent setting rather than guessing a value. Never share credentials, email-confirmation URLs or tokens in chat.
 
 ## Stage 1: review and push the release
@@ -49,6 +51,8 @@ Expand **Environment Variables** on the import screen, or open project **Setting
 | `NEXT_PUBLIC_APP_URL` | Exact HTTPS production origin with no path/query; configure once the assigned domain is known |
 
 `NEXT_PUBLIC_` values enter client bundles and are public. OpenAI and Unsplash keys must retain their server-only names. Pinterest credentials are not needed; board bookmarks work without OAuth. No Supabase privileged credential is required. The prebuild guard rejects a supplied privileged browser key before compiling it into a bundle.
+
+Vercel's current **Config/Secret** types: use **Config** for `NEXT_PUBLIC_APP_URL` (the public website address), keeping that exact variable name. The warning about removing a public framework prefix appears when trying to treat a public-prefixed variable as Secret. Do not rename it to APP_URL. For this deployment, its value is `https://outfyt-dun.vercel.app`, targeted to Production. If it was already saved as Secret and the type cannot be changed, Vercel documents deleting that one variable and recreating it with the same key/value as Config; saved Secrets cannot be converted in place. Save and redeploy. Keep real server credentials as Secret. Reference: https://vercel.com/docs/environment-variables/sensitive-environment-variables
 
 For the very first deployment, if Vercel has not shown the final domain yet, leave `NEXT_PUBLIC_APP_URL` unset rather than entering a guessed URL or localhost. The build can complete, but signup/resend intentionally refuse to create production confirmation links until the real origin is set. Existing-account sign-in does not need that variable. Complete the next stage before testing signup or sharing the app.
 
