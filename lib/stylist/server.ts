@@ -4,10 +4,11 @@ import OpenAI from "openai";
 import { loadWardrobe } from "@/lib/wardrobe/read";
 import { getOwnedItem, wardrobeContext } from "@/lib/wardrobe/server";
 import { createWardrobeItem, requireOwnedItem, WardrobeError } from "@/lib/wardrobe/service";
-import { clothingSchema, imageMetadataError, imageExtension, type WardrobeItem } from "@/lib/wardrobe/schema";
+import { clothingSchema, type WardrobeItem } from "@/lib/wardrobe/schema";
 import { toolSchemas, sanitizeToolArguments, type ToolName } from "./tools";
 import { outfitDetailsSchema, styleProposalSchema, validateOutfitItems, type OutfitCandidate, type SavedOutfit, type StylistView, type ActionLog, type PendingAction, type StylistMessage } from "./schema";
-import { generateOwnedOutfits, analyzeOwnedInspiration } from "./generation";
+import { generateOwnedOutfits } from "./generation";
+import { runInspirationAnalysis } from "@/lib/style/server";
 import type { ToolResult } from "./loop";
 import { readSavedOutfits } from "./outfits";
 import { photoBatchSchema, searchReferencePhotos } from "./photos";
@@ -23,7 +24,7 @@ export function stylistError(error: unknown) {
 
 export function checkRpc(error: { code?: string; message: string } | null) {
   if (!error) return;
-  if (["PGRST202","PGRST205","42P01","42501"].includes(error.code || "")) throw new WardrobeError("Database setup is incomplete. Run the supplied migrations through 0004_chat_sessions.sql.", 503);
+  if (["PGRST202","PGRST204","PGRST205","42P01","42703","42501"].includes(error.code || "")) throw new WardrobeError("Database setup is incomplete. Run the supplied migrations through 0006_style_dna.sql.", 503);
   if (error.message.includes("Hourly")) throw new WardrobeError("You have reached 10 stylist requests this hour. Try again next hour.", 429);
   if (error.message.includes("already running")) throw new WardrobeError("A stylist request is already running. Wait for it to finish, then refresh.", 409);
   if (error.message.includes("changed") || error.message.includes("expired")) throw new WardrobeError("This item changed or its approval expired. Refresh and request the action again.", 409);
@@ -38,7 +39,7 @@ export async function savedOutfits(context: StylistContext): Promise<SavedOutfit
 }
 
 export async function getStyle(context: StylistContext) {
-  const { data, error } = await context.supabase.from("style_profiles").select("aesthetic_tags,preferred_colors,favorite_clothing_types,disliked_styles,style_summary,comfort_preferences,updated_at").eq("user_id",context.user.id).maybeSingle();
+  const { data, error } = await context.supabase.from("style_profiles").select("aesthetic_tags,preferred_colors,favorite_clothing_types,disliked_styles,style_summary,comfort_preferences,notes,updated_at").eq("user_id",context.user.id).maybeSingle();
   checkRpc(error); return data;
 }
 
@@ -138,7 +139,10 @@ export function createToolExecutor(context: StylistContext, turnId: string, clie
         return completed({ items:rows.map(item => ({ id:item.id,name:item.name,category:item.category,subcategory:item.subcategory,primary_color:item.primary_color,secondary_colors:item.secondary_colors,style_tags:item.style_tags,season_tags:item.season_tags,description:item.description })), limit:300 });
       }
       case "get_wardrobe_item": return completed(requireOwnedItem(await getOwnedItem(toolSchemas.get_wardrobe_item.parse(args).id,context),user.id));
-      case "get_style_profile": return completed(await getStyle(context));
+      case "get_style_profile": {
+        const images=await supabase.from("inspiration_images").select("id,name").eq("user_id",user.id).order("created_at",{ ascending:false }).limit(50);checkRpc(images.error);
+        return completed({ profile:await getStyle(context),inspiration_images:images.data || [] });
+      }
       case "get_saved_outfits": return completed(await savedOutfits(context));
       case "add_clothing_item": {
         const input = toolSchemas.add_clothing_item.parse(args); claimWriteAllowance("clothing");
@@ -183,12 +187,7 @@ export function createToolExecutor(context: StylistContext, turnId: string, clie
       case "analyze_inspiration": {
         if (analyzed) throw new Error("One inspiration analysis is allowed per request."); analyzed = true;
         const { image_id } = toolSchemas.analyze_inspiration.parse(args);
-        const { data,error } = await supabase.from("inspiration_images").select("image_path").eq("id",image_id).eq("user_id",user.id).maybeSingle(); checkRpc(error);
-        if (!data) throw new Error("No matching owned inspiration image exists. Inspiration uploads arrive in Milestone 4; no image was analyzed.");
-        const download = await supabase.storage.from("inspiration-images").download(data.image_path); if (download.error || !download.data) throw new Error("Could not access that private inspiration image.");
-        const issue = imageMetadataError(download.data); if (issue) throw new Error(issue);
-        const bytes = new Uint8Array(await download.data.arrayBuffer()); if (!imageExtension(bytes,download.data.type)) throw new Error("Invalid inspiration image type.");
-        return completed({ proposal:await analyzeOwnedInspiration(client,model,bytes,download.data.type), applied:false });
+        return completed({ ...await runInspirationAnalysis(context,[image_id]),applied:false });
       }
     }
   };

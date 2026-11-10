@@ -33,7 +33,7 @@ const descriptions: Record<ToolName, string> = {
   update_outfit: "Modify one saved outfit. Null fields preserve current values. Item IDs, if supplied, replace the complete combination.",
   delete_outfit: "Prepare deletion of one saved outfit. This never deletes immediately; a separate user approval is required.",
   delete_clothing_item: "Prepare deletion of one clothing item and its private photo. Blocks items used in saved outfits. Requires separate approval.",
-  get_style_profile: "Retrieve the persisted user Style DNA, or report that it is not configured.",
+  get_style_profile: "Retrieve persisted user Style DNA and the IDs/names of their available inspiration uploads, or report that it is not configured.",
   update_style_profile: "Propose complete style-preference changes for separate user approval. Does not apply them immediately.",
   analyze_inspiration: "Analyze one already-uploaded, owned inspiration image and return a proposed style summary. Does not change preferences or retrieve Pinterest data.",
 };

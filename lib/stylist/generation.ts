@@ -1,8 +1,8 @@
 import type OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { OUTFIT_GENERATION_PROMPT } from "@/lib/prompts/outfit-generation";
-import { STYLE_DNA_ANALYSIS_PROMPT } from "@/lib/prompts/style-dna-analysis";
-import { outfitGenerationSchema, styleProposalSchema, validateOutfitItems } from "./schema";
+import { outfitGenerationSchema, validateOutfitItems } from "./schema";
+import { analyzeStyleImages } from "@/lib/style/analysis";
 import type { WardrobeItem } from "@/lib/wardrobe/schema";
 
 export async function generateOwnedOutfits(client: OpenAI, model: string, wardrobe: WardrobeItem[], style: unknown, request: { occasion: string; aesthetic: string; restrictions: string[]; required_item_ids: string[]; excluded_item_ids: string[]; count: number }) {
@@ -28,13 +28,5 @@ export async function generateOwnedOutfits(client: OpenAI, model: string, wardro
 }
 
 export async function analyzeOwnedInspiration(client: OpenAI, model: string, bytes: Uint8Array, mime: string) {
-  const response = await client.responses.parse({
-    model, store: false, max_output_tokens: 3000,
-    ...(model.startsWith("gpt-5") ? { reasoning: { effort: "low" as const } } : {}),
-    instructions: STYLE_DNA_ANALYSIS_PROMPT,
-    input: [{ role: "user", content: [{ type: "input_image", image_url: `data:${mime};base64,${Buffer.from(bytes).toString("base64")}`, detail: "low" }] }],
-    text: { format: zodTextFormat(styleProposalSchema, "style_proposal") },
-  });
-  if (response.status !== "completed") throw new Error("Inspiration analysis was incomplete. No preferences were changed.");
-  return styleProposalSchema.parse(response.output_parsed);
+  return analyzeStyleImages(client,model,[{ bytes,mime }]);
 }

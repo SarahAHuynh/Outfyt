@@ -44,11 +44,13 @@ These are ongoing instructions, not an installed background updater. `AGENTS.md`
 
 ## Current checkpoint: resume here
 
-**Do not rebuild the app or restart Milestone 1.** Milestones 1 and 2 passed user acceptance. Milestone 3 and follow-up fixes are implemented; on November 10 the user reported that the latest test cases work. The photo-reference follow-up has passed user acceptance. Milestone 4 has not started.
+**Do not rebuild the app or restart Milestone 1.** Milestones 1 and 2 and the latest Milestone 3 photo/chat follow-ups passed user acceptance. The user explicitly requested the next milestone on November 10. Milestone 4 (Style DNA) is now implemented and locally verified, awaiting hosted migration 0006 and user acceptance. Milestone 5 has not started.
 
-Most recent implementation: Unsplash reference photos in AI Stylist. The user said **"Unsplash key ready"**. One real search succeeded with HTTP 200 and one photo result; that check used one request, and the remaining allowance reported then was 49. This is historical, not the current quota.
+Most recent implementation: the user found the Style DNA page cluttered and requested an intentional guided flow with dark purple action buttons. The page now reveals one of four steps at a time: Your aesthetic → Everyday details → optional Inspiration → Review & save. Saved profiles open as a compact summary, and pending reviews resume at the final step. Pinterest and reload controls are tucked into More options (Pinterest after saving). No additional migration or environment change is needed for this UI follow-up.
 
-Latest completed acceptance checklist given to the user:
+The underlying Milestone 4 functionality remains: editable preferences and comfort/notes, exact persisted approval, private inspiration uploads and confirmed removal, combined analysis of up to five images, safe draft merging, cached analysis/shared budget, and optional Pinterest bookmarks. Saved profile data grounds outfit generation; chat uses the same image-analysis budget/cache. Unsplash remains connected. No paid AI requests or hosted database changes were made during the guided-flow update.
+
+Previously completed Milestone 3 acceptance checklist given to the user:
 
 1. In Supabase SQL Editor, run `supabase/migrations/0005_reference_photos.sql` once, after 0004.
 2. Run `supabase/checks/photos.sql`; expect PASS.
@@ -57,9 +59,13 @@ Latest completed acceptance checklist given to the user:
 
 **Latest user report:** "also the test cases work" on November 10, following the Unsplash/photo-card checklist. Record that checklist as user-passed; this is user verification, not a fresh independent inspection of the hosted database or every earlier Milestone 3 acceptance scenario. No new application checks were run for this acknowledgment.
 
-**Current discussion:** the user asks whether Pinterest API could replace Unsplash and whether that is recommended. No provider switch has been implemented or approved as a final decision. Research on November 10 found ordinary search is scoped to the authorized user's Pins; broader partner search is beta and not available to all apps. Pinterest setup requires a business account, app review, and OAuth. Recommendation: keep the working Unsplash search for now and consider authorized board-based Pinterest inspiration with Style DNA. Explain the distinction before committing to a replacement.
+**Pinterest decision context:** the user asked whether Pinterest API could replace Unsplash. No provider switch was made. November 10 research found ordinary search is scoped to the authorized user's Pins; broader partner search is beta and not available to all apps. Pinterest setup requires a business account, review, and OAuth. We recommended keeping Unsplash and optional board-based inspiration later. Milestone 4 implements only a URL bookmark with an explicit sync-not-configured status, not Pinterest API access or board analysis.
 
-Next feature milestone, after the user approves: **Milestone 4, Style DNA**. Do not start it solely because tests passed while the provider question is still being discussed.
+**Resume with user setup/review:** have the user follow `docs/MILESTONE_4.md`: run `supabase/migrations/0006_style_dna.sql` once after 0005, run `supabase/checks/style-dna.sql` (expect PASS), restart `npm run dev`, and run the guide's acceptance tests. These hosted steps are not independently verified or user-confirmed yet. Existing Supabase/OpenAI settings and the private inspiration bucket are reused; no new accounts or keys are required.
+
+For the latest UI follow-up, if migration 0006 is already applied, simply refresh Style DNA. Do not rerun it. The user has not yet confirmed acceptance of the redesigned flow. Test the manual route with inspiration skipped, Back navigation, the optional photo-analysis route, reject/approve behavior, refresh/resume, and editing an existing saved profile. Suggested follow-up commit: `Guide users through Style DNA setup`.
+
+Next milestone only after approval: **Milestone 5, Finalization and Deployment**. Stop for Milestone 4 review first. Suggested Milestone 4 commit: `Add Style DNA preferences and inspiration analysis`.
 
 ## Milestone roadmap and status
 
@@ -69,10 +75,10 @@ Next feature milestone, after the user approves: **Milestone 4, Style DNA**. Do 
 | 2: Digital Wardrobe | Secure image upload/preview, real AI clothing recognition, editable results, wardrobe CRUD/filtering | User explicitly said "milestone 2 passes" |
 | 3: AI Stylist Agent | Real tool calling, validated owned outfits, lookbook, modifications, approvals, logs | Implemented and locally verified; latest follow-up tests user-passed; do not infer every original acceptance scenario was rerun |
 | 3 follow-ups | Persistent Saved buttons, separate chats, lookbook query fix, real Unsplash recommendation photos | Latest manual test cases user-passed on November 10 |
-| 4: Style DNA | Preferences UI, inspiration uploads, AI analysis, persistent profile, style-aware generation, optional Pinterest URL UI | Not started as a full feature; foundational schema/tools already exist |
+| 4: Style DNA | Preferences UI, inspiration uploads, AI analysis, persistent profile, style-aware generation, optional Pinterest URL UI | Implemented; 65 tests, lint, types, build and API smoke checks pass; hosted setup/user review pending |
 | 5: Finalization and Deployment | Integration/security checks, responsive polish, production setup, Vercel, documentation, demo data; authorized Pinterest refresh if available | Pending |
 
-Do not mistake existing Style DNA page/layout or foundational tools for completed Milestone 4. Deployment and Pinterest synchronization are not verified or complete.
+Milestone 4 is implemented, but do not mark its live acceptance complete until the user confirms. Deployment and Pinterest synchronization remain unconfigured and unverified.
 
 ## Accepted design and conversation decisions
 
@@ -86,6 +92,7 @@ Do not mistake existing Style DNA page/layout or foundational tools for complete
 - The user asked for image examples of recommended bottoms, not only written suggestions, and preferred the cheapest option. Implemented real stock-photo references instead of paid AI image generation or shopping APIs.
 - Example user style request: laid-back fall tomboy look in blue, white, and green. Their reported closet then had navy/white tops, olive zip-up outerwear, and black loafers but lacked bottoms. This was a conversation example, not seed data or a permanent assumption about their current closet.
 - Never invent a complete outfit when essential owned clothes are missing. Recommend additions honestly, with reference cards where available.
+- Style DNA must feel intentional and beginner-friendly: reveal one step at a time, show the next content after the current step, and use dark purple for primary actions. Keep secondary actions quiet, preserve draft values when going Back, make inspiration skippable, and keep Pinterest/extra settings out of the main path. Do not restore the full editor/gallery/Pinterest layout shown all at once.
 
 ## Implementation map
 
@@ -99,6 +106,8 @@ At this checkpoint: Next.js 16.4.5, React 19, Tailwind 3, Supabase SSR 0.5.2, Su
 | `app/api/wardrobe/` | Wardrobe CRUD, image analysis, deletion handling |
 | `app/api/stylist/` | Chat requests/history, chat creation, pending-action decisions |
 | `app/api/outfits/` | Saved-look operations |
+| `app/api/style-dna/`, `components/style/editor.tsx` | Profile review, inspiration gallery/upload/analysis/removal, Pinterest reference UI |
+| `lib/style/` | Preference schemas, additive suggestion merge, structured vision, safe upload service, private reads and analysis cache/budget |
 | `lib/auth/`, `lib/supabase/` | Authentication, email feedback, session-aware clients |
 | `lib/ai/` | Clothing vision analysis |
 | `lib/wardrobe/` | Clothing schemas, uploads, ownership, storage/read helpers |
@@ -146,6 +155,8 @@ The `search_reference_photos` tool automatically accompanies missing-clothing re
 
 ## Setup and migrations
 
+Milestone 4 adds migration 0006. The guide `docs/MILESTONE_4.md` contains exact Supabase SQL Editor instructions, the rollback-only verification query, local restart steps, and manual acceptance tests. Do not rerun older migrations or replace existing environment variables.
+
 Existing local project path: `C:\Users\sarahhuynh\Outfyt`; shell: PowerShell. On another machine use the actual checkout path, not this user's absolute paths.
 
 Keep `.env.local` private and ignored. Start with `.env.example` only when setting up a new environment; never overwrite an existing secret file. Variable names:
@@ -167,6 +178,7 @@ The user confirmed Supabase project creation, initial database checks, auth sett
 | `0003_stylist_agent.sql` | Turns/messages/candidates, checked mutations, approvals, agent budgets | `stylist.sql` |
 | `0004_chat_sessions.sql` | Separate chats and legacy-history preservation | `chats.sql` |
 | `0005_reference_photos.sql` | Private reference persistence and shared search reservation | `photos.sql` |
+| `0006_style_dna.sql` | Extended profile review/approval, private inspiration persistence/cache/budgets/deletion, Pinterest bookmarks | `style-dna.sql` |
 
 These files live in `supabase/migrations/` and `supabase/checks/`. Repository migration files do not prove they were run in hosted Supabase. Give SQL Editor steps and verification instructions for the specific missing migration; do not rerun old migrations or delete data. SQL check fixtures roll back; no real emails/model calls are made by them.
 
@@ -179,14 +191,15 @@ These files live in `supabase/migrations/` and `supabase/checks/`. Repository mi
 
 ## Verification and manual review
 
-Last verified application implementation before this documentation handoff:
+Latest verification for Milestone 4 and its guided-flow UI follow-up on November 10:
 
-- **56 automated tests passed**, including mocked provider behavior and PGlite execution of all five migrations and SQL checks.
+- **65 automated tests passed**, including mocked vision/Responses requests, safe merging/upload cleanup, outfit grounding, and PGlite execution of all six migrations and SQL checks.
 - Lint, TypeScript checking, and production build passed.
-- One live Unsplash search returned HTTP 200 and a photo. Automated AI tests use mocked OpenAI; do not claim live model requests were made as part of that run.
-- Earlier auth/wardrobe/stylist smoke checks passed. These do not replace signed-in hosted acceptance tests.
+- Signed-out/cross-origin HTTP smoke checks passed on a local production server, including all new Style DNA routes. These do not replace signed-in hosted acceptance tests.
+- A prior live Unsplash search returned HTTP 200 and a photo. This milestone made no paid model calls; external AI requests were mocked.
+- The guided-flow follow-up reran all 65 tests and passed lint, TypeScript and the production build. Earlier API smoke results are from the original Milestone 4 implementation, not a new signed-in walkthrough of the redesigned UI. Interactive browser acceptance remains for the user.
 
-These are historical results, not checks rerun automatically in a fresh session. The November 10 handoff change is documentation-only; no application test rerun is needed solely for it.
+These are actual results from the Milestone 4 implementation session, not checks rerun automatically in a new session. Windows initially blocked test/build workers with EPERM; rerunning with the required execution approval passed.
 
 Standard commands from the repository root:
 
@@ -214,7 +227,7 @@ Optional signed-out smoke check with an already running server:
 node tests/stylist-smoke.mjs http://localhost:3000
 ```
 
-### Latest user-passed test cases
+### Prior Milestone 3 user-passed test cases
 
 The user reported these test cases work on November 10. They remain useful regression checks; do not ask the user to repeat setup without evidence of a new problem.
 
@@ -241,7 +254,20 @@ At review, include a short suggested commit message reflecting the actual staged
 
 ## Next milestone requirements
 
-After current acceptance and approval, Milestone 4 should implement editable personal preferences, optional secure inspiration uploads, real AI analysis, suggested changes that can be edited/approved, persistence, and use of that profile in recommendations. Preserve explicit user choices and comfort preferences; support multiple aesthetics rather than forcing one label.
+Milestone 4 is implemented. Await its hosted migration/acceptance review before Milestone 5. See `docs/MILESTONE_4.md` for the full manual checklist: review/reject/approve preferences, refresh persistence, stale edits, private multi-image upload, combined analysis, cached repeats, draft merging, confirmed removal, bookmark validation, style-aware outfits, and second-user isolation.
+
+Implementation decisions to preserve:
+
+- `Review changes` creates an immutable pending proposal. `Approve changes` saves the exact reviewed profile, including comfort preferences and notes. `Keep unchanged` rejects. Stale profile versions reject review or approval instead of silently overwriting newer data.
+- Inspiration suggestions merge into the editable draft only when the user requests it. Existing choices, dislikes, comfort, notes and non-empty summary are preserved; empty summary may be filled. The merged draft still requires review/approval.
+- Up to 50 private inspiration images, JPEG/PNG/WebP, 10 MB each. Analyze 1–5 together; one active analysis/user, 10 new analyses/user/clock hour, shared by chat and page. Completed results for matching image IDs are reused regardless of order; failures count against budget.
+- Image removal has an owner-bound ten-minute confirmation token. It clears associated analyses and keeps saved preferences. Storage cleanup can be retried with the same resolved token. Upload retries/read-before-cleanup protect committed images when a database response is lost.
+- Signed inspiration previews expire after ten minutes. `More options → Reload saved progress` refreshes them and restores the saved profile or pending review, resetting unsaved edits. Other uploads/analysis operations preserve the draft and its base version.
+- The wizard shows only one panel at a time and preserves draft/selection state across Back/Continue navigation. New profiles start at aesthetics; saved profiles start at the completion summary; a pending approval resumes at Review & save. Continue alone never persists unfinished form fields.
+- Optional inspiration progressively reveals the photo picker, preview/upload, gallery/selection, then analysis results. Adding suggestions moves into final review. Users can skip photos/analysis/suggestions and still save manual preferences.
+- Editing a preference invalidates the locally selected pending review, so the changed draft must be reviewed again. Server approval tokens remain immutable and expire normally. The shared pending-action card now reports resolution status and busy state; completion is shown only for a completed save, not rejection/expiry. Navigation locks during approval and unresolved image deletion.
+- The existing approval resolver is retained as an inaccessible legacy function under migration 0006; the public checked wrapper adds comfort/notes only for approved extended proposals. Older agent proposals preserve those fields.
+- Pinterest URLs are validated reference bookmarks. No OAuth, sync, download, or board analysis is claimed. Unsplash is still the recommendation-photo provider.
 
 Pinterest remains optional. A board URL alone does not authorize image access or prove analysis. If official API access is unavailable, save the URL as a reference with an honest not-configured status and keep manual inspiration uploads working. Any later sync must use supported OAuth/scopes, pagination, stable Pin IDs, new/removed Pin reconciliation, no repeated unchanged-image analysis, credential/error handling, and user review before preference replacement. Start with manual refresh; no premature background jobs.
 
@@ -255,6 +281,7 @@ Milestone 5 includes responsive polish, integration/security/error review, GitHu
 - `docs/MILESTONE_3.md`: agent architecture, setup, safety, acceptance checklist; original test count predates later additions.
 - `docs/CHAT_UPDATES.md`: chat/save/lookbook changes and regression tests; its final photo-status note predates integration.
 - `docs/PHOTO_SETUP.md`: current Unsplash setup, migration, limits, and test cases.
+- `docs/MILESTONE_4.md`: latest Style DNA setup, implementation, limits, acceptance tests and suggested commit message.
 - `DEMO_GUIDE.md`: class demonstration workflow.
 
 ## Handoff maintenance checklist

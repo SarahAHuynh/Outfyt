@@ -31,4 +31,4 @@ New chat and Previous chats controls provide persistent, separate conversations.
 | Reopen a chat URL after refresh | The same selected conversation loads |
 | Try another user's chat URL or chat ID | Access denied; no messages or approvals leak |
 
-Account setup for future free reference photos is in `docs/PHOTO_SETUP.md`. Photo search is still pending that account stage; these changes do not claim it is connected.
+Reference-photo search was subsequently connected; setup and tests are in `docs/PHOTO_SETUP.md`. Style DNA preferences and inspiration uploads are now implemented separately; follow `docs/MILESTONE_4.md` for migration 0006.

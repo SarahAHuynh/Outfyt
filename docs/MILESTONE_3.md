@@ -1,5 +1,7 @@
 # Milestone 3: AI Stylist and lookbook
 
+Current follow-up: Milestone 4 implements the Style DNA editor and inspiration uploads. Apply migration 0006 after 0005 and follow `docs/MILESTONE_4.md`. References below to future inspiration UI describe the original Milestone 3 checkpoint, not the latest implementation.
+
 ## Implemented
 
 The AI Stylist uses the official OpenAI Responses API with strict function schemas. It executes real authorized application tools, feeds their results back to the model, and preserves response/reasoning items between steps. Chat history, generated candidates, pending approvals, logs and saved outfits persist in Supabase. No hardcoded outfit suggestions or generated try-on images are used.

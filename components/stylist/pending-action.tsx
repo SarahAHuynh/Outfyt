@@ -5,17 +5,17 @@ import { Button } from "@/components/ui";
 import { readApiResponse } from "@/components/wardrobe/item-editor";
 import type { PendingAction } from "@/lib/stylist/schema";
 
-export function PendingActionCard({ action,onResolved }: { action:PendingAction; onResolved:(message:string) => void }) {
+export function PendingActionCard({ action,onResolved,onBusyChange }: { action:PendingAction; onResolved:(message:string,status?:string) => void;onBusyChange?:(busy:boolean)=>void }) {
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
   const title = action.action_name === "update_style_profile" ? "Review Style DNA changes" : action.action_name === "delete_clothing_item" ? "Delete clothing item?" : "Delete saved outfit?";
   async function resolve(approve:boolean) {
-    setBusy(true); setError("");
+    setBusy(true); onBusyChange?.(true); setError("");
     try {
       const data = await readApiResponse(await fetch("/api/stylist/approval",{ method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify({ token:action.token,approve }) }));
-      onResolved(data.warning || data.result?.message || "Action resolved.");
+      onResolved(data.warning || data.result?.message || "Action resolved.",data.status);
     } catch(cause) { setError(cause instanceof Error ? cause.message : "Could not resolve this action."); }
-    finally { setBusy(false); }
+    finally { setBusy(false); onBusyChange?.(false); }
   }
   const proposal = action.payload.proposal as Record<string,unknown> | undefined;
   return <section aria-label={title} className="rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-950">
